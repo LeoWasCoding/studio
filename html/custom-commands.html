@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leo's Studio | Command Builder</title>
+    <style>
+        :root {
+            --bg: #050505;
+            --surface: #0f0f0f;
+            --surface-light: #1a1a1a;
+            --border: #333;
+            --primary: #FFD700;
+            --primary-dim: #b39700;
+            --text-main: #e0e0e0;
+            --text-muted: #888888;
+            --danger: #ff4444;
+            --warning: #ffbb33;
+            --success: #00C851;
+            --console-bg: #0a0a0a;
+            --console-text: #00ff00;
+        }
+
+        * { box-sizing: border-box; outline: none; }
+        
+        body {
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* SCROLLBARS */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 340px;
+            background-color: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            z-index: 10;
+            box-shadow: 5px 0 20px rgba(0,0,0,0.5);
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-align: center;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 15px;
+        }
+
+        .tab-bar { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+        .tab { flex: 1; text-align: center; padding: 8px; cursor: pointer; color: #666; font-size: 0.8rem; font-weight: bold; }
+        .tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
+
+        .io-actions { display: flex; gap: 10px; margin-bottom: 15px; }
+
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            color: var(--text-main);
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+        }
+        .btn:hover { background: #252525; border-color: var(--primary); }
+        .btn:active { transform: translateY(1px); }
+
+        .btn-primary { background: var(--primary); color: #000; border: none; }
+        .btn-primary:hover { background: #ffe44d; box-shadow: 0 0 10px rgba(255, 215, 0, 0.2); }
+        .btn-danger { background: rgba(255, 68, 68, 0.1); color: var(--danger); border-color: var(--danger); }
+        .btn-success { background: var(--success); color: white; border: none; width: 100%; margin-top: auto; padding: 15px; font-size: 0.9rem; }
+
+        .list-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+
+        .nav-item {
+            padding: 10px; background: rgba(255,255,255,0.02); border-radius: 4px; cursor: pointer;
+            border-left: 3px solid transparent; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.05); }
+        .nav-item.active { background: rgba(255, 215, 0, 0.08); border-left: 3px solid var(--primary); color: var(--primary); }
+        .tag { font-size: 0.65rem; padding: 2px 5px; border-radius: 3px; background: #000; color: #666; }
+
+        /* WORKSPACE */
+        .workspace { flex: 1; display: flex; flex-direction: column; position: relative; }
+
+        .editor-area {
+            flex: 1; padding: 30px 50px; overflow-y: auto;
+            background: radial-gradient(circle at top right, #151515 0%, #050505 60%);
+        }
+
+        .docs-area {
+            display: none; padding: 30px; overflow-y: auto; background: #080808; color: #ccc; line-height: 1.6;
+        }
+        .docs-area h3 { color: var(--primary); border-bottom: 1px solid #333; padding-bottom: 5px; margin-top: 20px; }
+        .docs-area code { background: #222; padding: 2px 5px; border-radius: 3px; color: #ff9; }
+
+        .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+        
+        h2 { margin: 0 0 15px 0; color: var(--primary); font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .full-width { grid-column: span 2; }
+        
+        label { display: block; margin-bottom: 6px; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+        
+        input, select, textarea {
+            width: 100%; background: #080808; border: 1px solid var(--border); color: var(--text-main);
+            padding: 10px; border-radius: 4px; font-family: 'Consolas', monospace; font-size: 0.85rem;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+
+        .item-row { display: flex; gap: 8px; align-items: center; background: #0a0a0a; border: 1px solid var(--border); padding: 8px; margin-bottom: 8px; border-radius: 4px; }
+
+        .code-editor { background: #080808; color: #d4d4d4; border-left: 2px solid var(--primary); min-height: 250px; line-height: 1.5; font-size: 0.9rem; }
+
+        .console-panel {
+            height: 200px; background: var(--surface); border-top: 1px solid var(--border); display: flex; flex-direction: column;
+        }
+        .console-header {
+            padding: 8px 15px; background: #111; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #666; font-weight: bold;
+        }
+        .console-output {
+            flex: 1; background: var(--console-bg); padding: 10px; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 0.85rem; color: var(--console-text);
+        }
+        .console-input-row { display: flex; border-top: 1px solid #333; }
+        .console-input { flex: 1; background: #000; border: none; color: #fff; padding: 10px; font-family: 'Consolas', monospace; }
+        
+        .log-entry { margin-bottom: 2px; word-break: break-word; }
+        .log-error { color: var(--danger); }
+        .log-warn { color: var(--warning); }
+        .log-info { color: #88ccff; }
+        .log-sys { color: #666; font-style: italic; }
+
+        .alert-box { background: rgba(255, 68, 68, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 10px; border-radius: 4px; font-size: 0.8rem; margin-bottom: 10px; display: none; }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal {
+            background: var(--surface); border: 1px solid var(--primary); width: 85%; max-width: 950px; height: 85%;
+            border-radius: 8px; padding: 25px; display: flex; flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="brand">Leo's Studio</div>
+    
+    <div class="tab-bar">
+        <div class="tab active" onclick="switchTab('editor')">Builder</div>
+        <div class="tab" onclick="switchTab('docs')">Reference Docs</div>
+    </div>
+
+    <div class="io-actions">
+        <button class="btn" style="flex:1" onclick="exportJSON()">Save JSON</button>
+        <button class="btn" style="flex:1" onclick="document.getElementById('fileInput').click()">Load JSON</button>
+        <input type="file" id="fileInput" style="display:none" onchange="importJSON(this)">
+    </div>
+
+    <div class="io-actions">
+        <button class="btn" style="flex:1" onclick="addEnum()">+ Enum</button>
+        <button class="btn btn-primary" style="flex:1" onclick="addCommand()">+ Command</button>
+    </div>
+
+    <div class="list-container" id="sidebarList">
+        </div>
+
+    <button class="btn btn-success" onclick="generateScript()">GENERATE FINAL SCRIPT</button>
+</div>
+
+<div class="workspace">
+    
+    <div class="editor-area" id="editorArea">
+        <div style="text-align: center; margin-top: 20vh; color: var(--text-muted);">
+            <h1 style="color: var(--primary); font-size: 2rem; margin-bottom: 10px;">LEO'S STUDIO</h1>
+            <p>Professional Bedrock Command Environment</p>
+            <p style="font-size:0.8rem">Select an item to begin or check Reference Docs.</p>
+        </div>
+    </div>
+
+    <div class="docs-area" id="docsArea">
+        <h1>Official Reference Guide</h1>
+        
+        <h3>Command Structure</h3>
+        <p>Names must have a namespace (e.g. <code>wiki:goto</code>). Minecraft strips the namespace for convenient typing, but addons should use the full name.</p>
+        
+        <h3>Permission Levels</h3>
+        <ul>
+            <li><strong>Any:</strong> Anyone (non-ops).</li>
+            <li><strong>GameDirectors:</strong> Operators (including Command Blocks).</li>
+            <li><strong>Admin:</strong> Operators (excluding Command Blocks).</li>
+            <li><strong>Host:</strong> World Host only.</li>
+            <li><strong>Owner:</strong> Server Console only.</li>
+        </ul>
+
+        <h3>Parameters</h3>
+        <p>Max 8 parameters. <strong>Mandatory</strong> parameters must come before <strong>Optional</strong> parameters.</p>
+        <p>Types: <code>String, Integer, Float, Boolean, BlockType, ItemType, EntityType, EntitySelector, PlayerSelector, Location, Enum</code>.</p>
+
+        <h3>Callback Logic</h3>
+        <p>Callbacks run in <strong>Read-Only Mode</strong>. To change the world (teleport, spawn), you must wrap code in <code>system.run(() => { ... })</code>.</p>
+    </div>
+
+    <div class="console-panel">
+        <div class="console-header">
+            <span>COMMAND SIMULATOR</span>
+            <span style="cursor:pointer; color:var(--danger)" onclick="clearConsole()">CLEAR LOGS</span>
+        </div>
+        <div class="console-output" id="consoleOutput">
+            <div class="log-sys">Leo's Studio Engine Loaded.</div>
+            <div class="log-sys">Type defined commands (e.g. /wiki:test) to simulate logic.</div>
+        </div>
+        <div class="console-input-row">
+            <span style="padding:10px; background:#000; color:#555;">&gt;</span>
+            <input type="text" class="console-input" id="consoleInput" placeholder="Enter command..." onkeydown="handleConsoleInput(event)">
+        </div>
+    </div>
+</div>
+
+<template id="tmpl-command">
+    <div class="panel">
+        <h2><span>⚙️</span> Configuration</h2>
+        <div class="form-grid">
+            <div><label>Namespace (Required)</label><input type="text" class="inp-namespace" placeholder="wiki"></div>
+            <div><label>Command Name</label><input type="text" class="inp-name" placeholder="goto"></div>
+            <div class="full-width"><label>Description</label><input type="text" class="inp-desc" placeholder="Teleports the player"></div>
+            <div>
+                <label>Permission Level</label>
+                <select class="inp-perm">
+                    <option value="Any">Any (Everyone)</option>
+                    <option value="GameDirectors">GameDirectors (Operators)</option>
+                    <option value="Admin">Admin (Ops no CmdBlocks)</option>
+                    <option value="Host">Host (World Owner)</option>
+                    <option value="Owner">Owner (Console)</option>
+                </select>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding-top:22px;">
+                <input type="checkbox" class="inp-cheats" style="width:20px; height:20px;">
+                <label style="margin:0; color:var(--text-main);">Cheats Required</label>
+            </div>
+        </div>
+    </div>
+    
+    <div class="alert-box" id="paramAlert">Warning: Optional parameters cannot precede Mandatory parameters.</div>
+
+    <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h2><span>📝</span> Parameters (Max 8)</h2>
+            <button class="btn" onclick="addParam()">+ Add Param</button>
+        </div>
+        <div class="param-list"></div>
+    </div>
+
+    <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h2><span>💻</span> Execution Logic</h2>
+            <div style="display:flex; gap:5px;">
+                <button class="btn" style="font-size:0.7rem" onclick="injectSnippet('playerOnly')">Snippet: Player Only</button>
+                <button class="btn" style="font-size:0.7rem" onclick="injectSnippet('teleportEnum')">Snippet: Teleport Switch</button>
+            </div>
+        </div>
+        <p style="font-size:0.75rem; color:#666; margin-bottom:5px;">
+            Variables: <code>origin</code> (CommandOrigin), plus your parameter names. 
+            Return <code>{ status, message }</code>.
+        </p>
+        <textarea class="inp-code code-editor" spellcheck="false"></textarea>
+    </div>
+    <button class="btn btn-danger" onclick="deleteActive()">Delete Command</button>
+</template>
+
+<template id="tmpl-enum">
+    <div class="panel">
+        <h2><span>🗂️</span> Enum Details</h2>
+        <div class="form-grid">
+            <div><label>Namespace</label><input type="text" class="inp-namespace" placeholder="wiki"></div>
+            <div><label>Enum Name</label><input type="text" class="inp-name" placeholder="locations"></div>
+        </div>
+    </div>
+    <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h2>Options</h2>
+            <button class="btn" onclick="addEnumVal()">+ Add Option</button>
+        </div>
+        <div class="enum-list"></div>
+    </div>
+    <button class="btn btn-danger" onclick="deleteActive()">Delete Enum</button>
+</template>
+
+<div class="modal-overlay" id="outputModal">
+    <div class="modal">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h2 style="margin:0">Generated 'main.js'</h2>
+            <button class="btn btn-danger" onclick="document.getElementById('outputModal').style.display='none'">Close</button>
+        </div>
+        <textarea id="finalCode" class="code-editor" style="flex:1; border:none; background:#000;" readonly></textarea>
+        <button class="btn btn-primary" onclick="copyCode()" style="margin-top:20px;">Copy to Clipboard</button>
+    </div>
+</div>
+
+<script>
+    // STATE
+    let project = { enums: [], commands: [] };
+    let activeType = null;
+    let activeId = null;
+
+    // CONSTANTS FROM REFERENCE
+    const PARAM_TYPES = [
+        { val: 'CustomCommandParamType.String', label: 'String' },
+        { val: 'CustomCommandParamType.Integer', label: 'Integer' },
+        { val: 'CustomCommandParamType.Float', label: 'Float' },
+        { val: 'CustomCommandParamType.Boolean', label: 'Boolean' },
+        { val: 'CustomCommandParamType.EntitySelector', label: 'EntitySelector' },
+        { val: 'CustomCommandParamType.PlayerSelector', label: 'PlayerSelector' },
+        { val: 'CustomCommandParamType.BlockType', label: 'BlockType' },
+        { val: 'CustomCommandParamType.EntityType', label: 'EntityType' },
+        { val: 'CustomCommandParamType.ItemType', label: 'ItemType' },
+        { val: 'CustomCommandParamType.Location', label: 'Location (Vec3)' },
+        { val: 'CustomCommandParamType.Enum', label: 'Enum' }
+    ];
+
+    // CONSOLE / SIMULATOR LOGIC
+    function log(msg, type = 'text') {
+        const out = document.getElementById('consoleOutput');
+        const div = document.createElement('div');
+        div.className = 'log-entry ' + (type === 'error' ? 'log-error' : type === 'warn' ? 'log-warn' : type === 'info' ? 'log-info' : type === 'sys' ? 'log-sys' : '');
+        div.innerText = msg;
+        out.appendChild(div);
+        out.scrollTop = out.scrollHeight;
+    }
+
+    function clearConsole() { document.getElementById('consoleOutput').innerHTML = '<div class="log-sys">Logs cleared.</div>'; }
+
+    function handleConsoleInput(e) {
+        if (e.key !== 'Enter') return;
+        const raw = e.target.value.trim();
+        e.target.value = '';
+        if (!raw) return;
+        log('> ' + raw);
+
+        if (!raw.startsWith('/')) { log('Error: Commands start with "/"', 'error'); return; }
+
+        // Naive Parser
+        const parts = raw.slice(1).match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+        const cmdName = parts.shift();
+
+        // Find Command
+        const cmd = project.commands.find(c => (c.namespace + ':' + c.name) === cmdName);
+        if (!cmd) { log(`Unknown command: ${cmdName}`, 'error'); return; }
+
+        // Map Params
+        const args = {};
+        const params = cmd.params || [];
+        
+        for (let i = 0; i < params.length; i++) {
+            const p = params[i];
+            let val = parts[i];
+
+            // Simulation Type Handling
+            if (val === undefined) {
+                if (!p.optional) { log(`Missing mandatory param: ${p.name}`, 'error'); return; }
+                continue;
+            }
+            
+            // Basic Type Casting for Simulation
+            if (p.type.includes('Integer')) val = parseInt(val);
+            else if (p.type.includes('Float')) val = parseFloat(val);
+            else if (p.type.includes('Boolean')) val = (val === 'true');
+            else if (p.type.includes('String')) val = val.replace(/"/g, '');
+            else if (p.type.includes('Location')) val = { x:0, y:0, z:0, note: "Mock Location" }; // Mock
+            
+            args[p.name] = val;
+        }
+
+        // Mock Environment
+        const mockSystem = { run: (cb) => { try { cb(); } catch(err) { log('Runtime Error: ' + err.message, 'error'); } } };
+        const mockOrigin = {
+            sourceEntity: {
+                name: "DevPlayer",
+                typeId: "minecraft:player",
+                sendMessage: (m) => log('[Chat] ' + m, 'info'),
+                teleport: (l) => log(`[Teleport] Entity -> ${JSON.stringify(l)}`, 'warn'),
+                getComponent: (c) => ({ resetToDefaultValue: () => log(`[Component] ${c} reset.`, 'warn') })
+            },
+            initiator: null
+        };
+
+        // Execute User Code
+        const funcBody = `
+            const system = this.system;
+            const CustomCommandStatus = { Success: 0, Failure: 1 };
+            const Player = class {}; // Mock Class
+            ${cmd.code}
+        `;
+
+        try {
+            const f = new Function('origin', ...params.map(p => p.name), funcBody);
+            const ctx = { system: mockSystem };
+            const res = f.apply(ctx, [mockOrigin, ...params.map(p => args[p.name])]);
+            
+            if (res) {
+                if (res.status === 0) log('✓ ' + (res.message || 'Success'), 'success');
+                else log('✗ ' + (res.message || 'Fail'), 'error');
+            }
+        } catch (err) {
+            log('Script Error: ' + err.message, 'error');
+        }
+    }
+
+    // TAB SWITCHING
+    function switchTab(t) {
+        document.querySelector('.tab.active').classList.remove('active');
+        // Find tab by text content is hard with onclick, using index logic or direct element ref
+        const tabs = document.querySelectorAll('.tab');
+        if(t==='editor') { tabs[0].classList.add('active'); document.getElementById('editorArea').style.display='block'; document.getElementById('docsArea').style.display='none'; }
+        else { tabs[1].classList.add('active'); document.getElementById('editorArea').style.display='none'; document.getElementById('docsArea').style.display='block'; }
+    }
+
+    // PROJECT IO
+    function exportJSON() {
+        const b = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'leos_project.json'; a.click();
+    }
+
+    function importJSON(inp) {
+        const f = inp.files[0];
+        if(!f) return;
+        const r = new FileReader();
+        r.onload = e => {
+            try { project = JSON.parse(e.target.result); activeId=null; renderSidebar(); document.getElementById('editorArea').innerHTML=''; log('Project Loaded.', 'sys'); }
+            catch(err) { alert('Invalid JSON'); }
+        };
+        r.readAsText(f);
+        inp.value = '';
+    }
+
+    // CRUD
+    function addCommand() {
+        const id = Date.now();
+        project.commands.push({
+            id, namespace: 'wiki', name: 'cmd'+project.commands.length, desc: 'Description', perm: 'Any', cheats: false, params: [],
+            code: `// Logic\nreturn { status: CustomCommandStatus.Success, message: "Done" };`
+        });
+        selectItem('command', id);
+    }
+
+    function addEnum() {
+        const id = Date.now();
+        project.enums.push({ id, namespace: 'wiki', name: 'enum'+project.enums.length, values: ['option1'] });
+        selectItem('enum', id);
+    }
+
+    function deleteActive() {
+        if(!confirm('Delete item?')) return;
+        if(activeType === 'command') project.commands = project.commands.filter(c => c.id !== activeId);
+        else project.enums = project.enums.filter(e => e.id !== activeId);
+        activeId = null;
+        renderSidebar();
+        document.getElementById('editorArea').innerHTML = '';
+    }
+
+    function selectItem(type, id) {
+        activeType = type; activeId = id;
+        switchTab('editor');
+        renderSidebar(); renderEditor();
+    }
+
+    // RENDERERS
+    function renderSidebar() {
+        const list = document.getElementById('sidebarList');
+        list.innerHTML = '';
+        project.enums.forEach(e => {
+            const el = document.createElement('div'); el.className = `nav-item ${activeId===e.id?'active':''}`;
+            el.innerHTML = `<span>${e.namespace}:${e.name}</span><span class="tag">ENUM</span>`;
+            el.onclick = () => selectItem('enum', e.id);
+            list.appendChild(el);
+        });
+        project.commands.forEach(c => {
+            const el = document.createElement('div'); el.className = `nav-item ${activeId===c.id?'active':''}`;
+            el.innerHTML = `<span>/${c.namespace}:${c.name}</span><span class="tag">CMD</span>`;
+            el.onclick = () => selectItem('command', c.id);
+            list.appendChild(el);
+        });
+    }
+
+    function renderEditor() {
+        const area = document.getElementById('editorArea');
+        area.innerHTML = '';
+        if(!activeId) return;
+
+        if(activeType === 'command') {
+            const cmd = project.commands.find(c => c.id === activeId);
+            const tmpl = document.getElementById('tmpl-command').content.cloneNode(true);
+            
+            // Bind Inputs
+            const bind = (sel, k, r=false) => {
+                const el = tmpl.querySelector(sel);
+                if(el.type === 'checkbox') { el.checked = cmd[k]; el.onchange = e => cmd[k] = e.target.checked; }
+                else { el.value = cmd[k]; el.oninput = e => { cmd[k] = e.target.value; if(r) renderSidebar(); }; }
+            };
+
+            bind('.inp-namespace', 'namespace', true);
+            bind('.inp-name', 'name', true);
+            bind('.inp-desc', 'desc');
+            bind('.inp-perm', 'perm');
+            bind('.inp-cheats', 'cheats');
+            bind('.inp-code', 'code');
+
+            // Params
+            const pList = tmpl.querySelector('.param-list');
+            let hasOpt = false;
+            let badOrder = false;
+
+            cmd.params.forEach((p, i) => {
+                if(p.optional) hasOpt = true;
+                else if(hasOpt) badOrder = true; // Mandatory after Optional
+
+                const row = document.createElement('div'); row.className = 'item-row';
+                let enumSel = '';
+                if(project.enums.length) {
+                    enumSel = `<select style="flex:1" onchange="updateParam(${i},'enumRef',this.value)"><option value="">Select Enum</option>
+                    ${project.enums.map(e => `<option value="${e.namespace}:${e.name}" ${p.enumRef === `${e.namespace}:${e.name}`?'selected':''}>${e.name}</option>`).join('')}</select>`;
+                }
+                
+                row.innerHTML = `<span style="color:var(--primary); font-weight:bold">${i+1}</span>
+                <input type="text" value="${p.name}" oninput="updateParam(${i},'name',this.value)" style="flex:1" placeholder="argName">
+                <select onchange="updateParam(${i},'type',this.value)" style="flex:1">${PARAM_TYPES.map(t=>`<option value="${t.val}" ${p.type===t.val?'selected':''}>${t.label}</option>`).join('')}</select>
+                ${p.type === 'CustomCommandParamType.Enum' ? enumSel : ''}
+                <label style="margin:0; white-space:nowrap;"><input type="checkbox" ${p.optional?'checked':''} onchange="updateParam(${i},'optional',this.checked)"> Optional</label>
+                <button class="btn btn-danger" onclick="removeParam(${i})">×</button>`;
+                pList.appendChild(row);
+            });
+
+            if(badOrder) tmpl.getElementById('paramAlert').style.display = 'block';
+
+            area.appendChild(tmpl);
+        } else {
+            const en = project.enums.find(e => e.id === activeId);
+            const tmpl = document.getElementById('tmpl-enum').content.cloneNode(true);
+            
+            tmpl.querySelector('.inp-namespace').value = en.namespace;
+            tmpl.querySelector('.inp-namespace').oninput = e => { en.namespace = e.target.value; renderSidebar(); };
+            tmpl.querySelector('.inp-name').value = en.name;
+            tmpl.querySelector('.inp-name').oninput = e => { en.name = e.target.value; renderSidebar(); };
+
+            const list = tmpl.querySelector('.enum-list');
+            en.values.forEach((v, i) => {
+                const row = document.createElement('div'); row.className = 'item-row';
+                row.innerHTML = `<span>${i+1}</span><input type="text" value="${v}" oninput="updateEnumVal(${i},this.value)"><button class="btn btn-danger" onclick="removeEnumVal(${i})">×</button>`;
+                list.appendChild(row);
+            });
+            area.appendChild(tmpl);
+        }
+    }
+
+    // LOGIC UPDATES
+    function addParam() {
+        const c = project.commands.find(x => x.id === activeId);
+        if(c.params.length < 8) { c.params.push({ name: 'arg', type: 'CustomCommandParamType.String', optional: false }); renderEditor(); }
+    }
+    function updateParam(i, k, v) { project.commands.find(x => x.id === activeId).params[i][k] = v; renderEditor(); }
+    function removeParam(i) { project.commands.find(x => x.id === activeId).params.splice(i,1); renderEditor(); }
+    function addEnumVal() { project.enums.find(x => x.id === activeId).values.push('newVal'); renderEditor(); }
+    function updateEnumVal(i, v) { project.enums.find(x => x.id === activeId).values[i] = v; }
+    function removeEnumVal(i) { project.enums.find(x => x.id === activeId).values.splice(i,1); renderEditor(); }
+
+    function injectSnippet(t) {
+        const c = project.commands.find(x => x.id === activeId);
+        let s = "";
+        if(t === 'playerOnly') {
+            s = `    // Player Check (Heal Example)
+    const source = origin.initiator ?? origin.sourceEntity;
+    if (!(source instanceof Player)) {
+        return { status: CustomCommandStatus.Failure, message: "Players only." };
+    }
+    // Action (Requires system.run)
+    system.run(() => source.getComponent("health").resetToDefaultValue());
+    return { status: CustomCommandStatus.Success, message: "Healed!" };`;
+        }
+        else if (t === 'teleportEnum') {
+            s = `    // Enum Switch (Teleport Example)
+    if (!origin.sourceEntity) return { status: CustomCommandStatus.Failure };
+    
+    let location = { x: 0, y: 100, z: 0 };
+    // Assuming 1st param is named 'tpLocation'
+    // if (tpLocation === "shop") location = { x: 100, y: 100, z: 100 };
+    
+    system.run(() => origin.sourceEntity.teleport(location));
+    return { status: CustomCommandStatus.Success, message: "Teleported." };`;
+        }
+        c.code = s;
+        renderEditor();
+    }
+
+    // GENERATOR
+    function generateScript() {
+        let s = `/**\n * Generated by Leo's Studio\n */\n`;
+        s += `import { system, world, CustomCommandParamType, CustomCommandStatus, CommandPermissionLevel, Player } from "@minecraft/server";\n\n`;
+        s += `system.beforeEvents.startup.subscribe(({ customCommandRegistry }) => {\n\n`;
+
+        project.enums.forEach(e => {
+            s += `    // Enum: ${e.namespace}:${e.name}\n`;
+            s += `    customCommandRegistry.registerEnum("${e.namespace}:${e.name}", [${e.values.map(v=>`"${v}"`).join(', ')}]);\n\n`;
+        });
+
+        project.commands.forEach(c => {
+            s += `    customCommandRegistry.registerCommand(\n        {\n`;
+            s += `            name: "${c.namespace}:${c.name}",\n`;
+            s += `            description: "${c.desc}",\n`;
+            s += `            permissionLevel: CommandPermissionLevel.${c.perm},\n`;
+            s += `            cheatsRequired: ${c.cheats},\n`;
+            
+            const mand = c.params.filter(p => !p.optional);
+            if(mand.length) {
+                s += `            mandatoryParameters: [\n`;
+                mand.forEach(p => s += `                { name: "${p.name}", type: ${p.type} },\n`);
+                s += `            ],\n`;
+            }
+
+            const opt = c.params.filter(p => p.optional);
+            if(opt.length) {
+                s += `            optionalParameters: [\n`;
+                opt.forEach(p => s += `                { name: "${p.name}", type: ${p.type} },\n`);
+                s += `            ],\n`;
+            }
+
+            s += `        },\n`;
+            s += `        (${['origin', ...c.params.map(p => p.name)].join(', ')}) => {\n`;
+            
+            // Indent code
+            s += c.code.split('\n').map(l => `            ${l}`).join('\n');
+            s += `\n        }\n    );\n\n`;
+        });
+
+        s += `});\n`;
+        document.getElementById('finalCode').value = s;
+        document.getElementById('outputModal').style.display = 'flex';
+    }
+
+    function copyCode() { document.getElementById('finalCode').select(); document.execCommand('copy'); }
+</script>
+</body>
+</html>
