@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leo's Studio | OreUI Image Creator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Silkscreen&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg-dark: #181818;
+            --bg-panel: #2b2b2b;
+            --bg-tool: #3c3c3c;
+            --border-light: #58585a;
+            --border-dark: #151515;
+            --accent-gold: #fbca10;
+            --selection-blue: #3b82f6;
+            --text-main: #e0e0e0;
+            --text-dim: #999;
+            --grid-color: rgba(255, 255, 255, 0.05);
+            --font-mc: 'Press Start 2P', cursive;
+            --font-ui: 'VT323', monospace;
+        }
+
+        * { box-sizing: border-box; user-select: none; -webkit-user-drag: none; }
+        
+        body {
+            margin: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Roboto Mono', monospace;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; background: #222; }
+        ::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+
+        header {
+            height: 50px;
+            background: #252526;
+            border-bottom: 1px solid #000;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            justify-content: space-between;
+            z-index: 20;
+        }
+
+        .brand { display: flex; align-items: center; gap: 10px; }
+        .brand h1 { font-family: var(--font-mc); font-size: 14px; color: var(--accent-gold); margin: 0; text-shadow: 2px 2px #000; }
+        .brand span { background: #444; padding: 2px 6px; border-radius: 4px; font-size: 10px; color: #fff; }
+
+        .toolbar-top { display: flex; gap: 10px; align-items: center; }
+        .divider { width: 1px; height: 24px; background: #555; margin: 0 4px; }
+        
+        .main-container { display: flex; flex: 1; height: calc(100vh - 50px); }
+
+        .sidebar-left {
+            width: 260px;
+            background: var(--bg-panel);
+            border-right: 2px solid #000;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .tab-header { display: flex; background: #1e1e1e; }
+        .tab-btn {
+            flex: 1; padding: 10px; background: transparent; border: none; color: #888; cursor: pointer; border-bottom: 2px solid transparent;
+            font-size: 11px; font-family: inherit; text-transform: uppercase;
+        }
+        .tab-btn.active { color: white; border-bottom-color: var(--accent-gold); }
+
+        .asset-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .category-title { font-size: 11px; color: #666; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+
+        .asset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+        
+        .tool-btn {
+            background: #3c3c3c; border: 1px solid #555; color: #ddd; padding: 8px; font-size: 11px; cursor: pointer;
+            text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+            border-radius: 4px; transition: all 0.1s;
+        }
+        .tool-btn.icon-only { width: 32px; height: 32px; padding: 0; }
+        .tool-btn:hover { background: #4a4a4a; border-color: #777; }
+        .tool-btn:active { transform: translateY(1px); }
+        .tool-btn.active { background: var(--selection-blue); border-color: #60a5fa; color: white; }
+
+        .discord-btn { background: #5865F2; border-color: #4752C4; color: white; }
+        .discord-btn:hover { background: #4752C4; }
+
+        .canvas-wrapper {
+            flex: 1;
+            background: #181818;
+            position: relative;
+            overflow: hidden; 
+            cursor: default;
+        }
+        
+        .canvas-wrapper.pan-mode { cursor: grab; }
+        .canvas-wrapper.pan-mode:active { cursor: grabbing; }
+
+        #viewport-container {
+            width: 100%; height: 100%;
+            transform-origin: 0 0;
+        }
+
+        #artboard {
+            width: 1280px; height: 720px; 
+            background: #48494a;
+            position: absolute; 
+            left: 50%; top: 50%; 
+            transform: translate(-50%, -50%); 
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .guide-line { position: fixed; background: #ff00ff; pointer-events: none; z-index: 9999; display: none; box-shadow: 0 0 2px rgba(0,0,0,0.5); }
+        .guide-v { width: 1px; height: 100vh; top: 0; }
+        .guide-h { height: 1px; width: 100vw; left: 0; }
+
+        .sidebar-right {
+            width: 280px;
+            background: var(--bg-panel);
+            border-left: 2px solid #000;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .panel-section { display: flex; flex-direction: column; }
+        .panel-header { background: #222; padding: 8px 10px; font-size: 11px; font-weight: bold; color: #aaa; border-bottom: 1px solid #444; border-top: 1px solid #000; }
+        
+        .props-container { flex: 1; overflow-y: auto; padding: 15px; border-bottom: 2px solid #000; min-height: 200px; }
+        .layers-container { height: 300px; overflow-y: auto; background: #252526; }
+
+        .layer-item {
+            display: flex; align-items: center; padding: 6px 10px; border-bottom: 1px solid #333; cursor: pointer; font-size: 12px;
+        }
+        .layer-item:hover { background: #333; }
+        .layer-item.active { background: #3c5070; color: white; }
+        .layer-icon { width: 20px; text-align: center; color: #888; margin-right: 8px; }
+        .layer-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .layer-actions { display: flex; gap: 5px; opacity: 0.5; }
+        .layer-item:hover .layer-actions { opacity: 1; }
+
+        .control-group { margin-bottom: 12px; }
+        .control-label { display: block; font-size: 10px; color: #888; margin-bottom: 4px; }
+        .control-row { display: flex; gap: 5px; }
+        
+        input[type="text"], input[type="number"], select {
+            background: #181818; border: 1px solid #444; color: white; padding: 4px 6px; width: 100%; font-family: inherit; font-size: 12px; border-radius: 3px;
+        }
+        input:focus, textarea:focus { outline: none; border-color: var(--selection-blue); }
+        input[type="color"] { width: 100%; height: 28px; padding: 0; border: none; cursor: pointer; }
+        input[type="range"] { width: 100%; accent-color: var(--accent-gold); }
+        textarea {
+            background: #181818; border: 1px solid #444; color: white; padding: 4px 6px; width: 100%; 
+            font-family: inherit; font-size: 12px; border-radius: 3px; resize: vertical; min-height: 60px;
+        }
+
+        .el-wrapper { position: absolute; box-sizing: border-box; }
+        .el-wrapper:hover { outline: 1px solid rgba(59, 130, 246, 0.5); }
+        .el-wrapper.selected { outline: 2px solid var(--selection-blue); z-index: 1000; }
+        
+        .resize-handle {
+            width: 8px; height: 8px; background: white; border: 1px solid var(--selection-blue); position: absolute; display: none; z-index: 1001;
+        }
+        .el-wrapper.selected .resize-handle { display: block; }
+        .rh-nw { top: -4px; left: -4px; cursor: nw-resize; }
+        .rh-ne { top: -4px; right: -4px; cursor: ne-resize; }
+        .rh-sw { bottom: -4px; left: -4px; cursor: sw-resize; }
+        .rh-se { bottom: -4px; right: -4px; cursor: se-resize; }
+
+        .ore-text { font-family: var(--font-mc); color: #fff; text-shadow: 2px 2px #000; line-height: 1.2; pointer-events: none; width: 100%; height: 100%; }
+        
+        .ore-panel { 
+            background: #212121; border: 2px solid #111; box-shadow: inset 2px 2px #3c3c3c, inset -2px -2px #111; 
+            width: 100%; height: 100%; pointer-events: none;
+        }
+        .ore-panel-light { 
+            background: #c6c6c6; border: 2px solid #000; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; 
+            width: 100%; height: 100%; pointer-events: none;
+        }
+        
+        .ore-btn {
+            background: #d0d1d4; border: 2px solid #000; box-shadow: inset 2px 2px #fff, inset -2px -2px #555, inset -4px -4px #999;
+            color: #1e1e1e; font-family: var(--font-mc); display: flex; justify-content: center; align-items: center;
+            width: 100%; height: 100%; pointer-events: none;
+        }
+
+        .ore-btn-action {
+            background: #3c8527; border: 2px solid #18330f; box-shadow: inset 2px 2px #5abf3b, inset -2px -2px #18330f;
+            color: #fff; text-shadow: 1px 1px #000; font-family: var(--font-mc); display: flex; justify-content: center; align-items: center;
+            width: 100%; height: 100%; pointer-events: none;
+        }
+
+        .ore-btn-destruct {
+            background: #8b2a2a; border: 2px solid #331010; box-shadow: inset 2px 2px #c95b5b, inset -2px -2px #331010;
+            color: #fff; text-shadow: 1px 1px #000; font-family: var(--font-mc); display: flex; justify-content: center; align-items: center;
+            width: 100%; height: 100%; pointer-events: none;
+        }
+        
+        .ore-slot {
+            background: #8b8b8b; border: 2px solid #fff; border-top-color:#373737; border-left-color:#373737;
+            width: 100%; height: 100%; pointer-events: none; display: flex; justify-content: center; align-items: center;
+        }
+
+        .ore-bar-bg { background: #333; border: 2px solid #fff; width: 100%; height: 100%; position: relative; pointer-events: none; }
+        .ore-bar-fill { height: 100%; background: #00aa00; position: absolute; top: 0; left: 0; }
+        
+        .ore-toggle { 
+            background: #5e5e5e; border: 2px solid #1e1e1e; width: 100%; height: 100%; position: relative; pointer-events: none;
+        }
+        .ore-toggle.on { background: #00aa00; }
+        .ore-toggle-handle { width: 50%; height: 100%; background: #ddd; border: 2px solid #000; position: absolute; left: 0; }
+        
+        .ore-checkbox {
+            width: 100%; height: 100%; background: #222; border: 2px solid #888; display: flex; align-items: center; justify-content: center;
+            pointer-events: none;
+        }
+        .ore-checkbox.checked::after {
+            content: ''; width: 60%; height: 60%; background: #3c8527; box-shadow: inset 1px 1px #5abf3b;
+        }
+
+        .ore-radio {
+            width: 100%; height: 100%; background: #222; border: 2px solid #888; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            pointer-events: none;
+        }
+        .ore-radio.checked::after {
+            content: ''; width: 50%; height: 50%; background: #fff; border-radius: 50%;
+        }
+
+        .ore-dropdown {
+            width: 100%; height: 100%; background: #333; border: 2px solid #111; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 8px;
+            font-family: var(--font-mc); font-size: 10px; pointer-events: none;
+        }
+
+        .hud-icon svg { width: 100%; height: 100%; filter: drop-shadow(2px 2px 0px #000); }
+        .hud-icon { width: 16px; height: 16px; display: inline-block; margin-right: 1px; }
+
+        .ore-tooltip { background: #100010; border: 2px solid #2a002a; padding: 5px; color: #a020f0; font-family: var(--font-mc); font-size: 10px; white-space: pre-wrap; width: 100%; height: 100%; overflow: hidden; }
+
+    </style>
+</head>
+<body>
+
+<div class="guide-line guide-v" id="guide-v"></div>
+<div class="guide-line guide-h" id="guide-h"></div>
+
+<header>
+    <div class="brand">
+        <h1>Leo's Studio</h1>
+        <span>OreUI Image Creator</span>
+    </div>
+    
+    <div class="toolbar-top">
+        <button class="tool-btn icon-only active" id="tool-select" onclick="setTool('select')" title="Select Tool (V)">
+            <i class="ph ph-cursor"></i>
+        </button>
+        <button class="tool-btn icon-only" id="tool-pan" onclick="setTool('pan')" title="Hand/Pan Tool (H)">
+            <i class="ph ph-hand-grabbing"></i>
+        </button>
+        
+        <div class="divider"></div>
+
+        <button class="tool-btn icon-only" onclick="adjustZoom(-0.1)" title="Zoom Out">
+            <i class="ph ph-minus"></i>
+        </button>
+        <span id="zoom-level" style="font-size:11px; color:#aaa; width:40px; text-align:center;">100%</span>
+        <button class="tool-btn icon-only" onclick="adjustZoom(0.1)" title="Zoom In">
+            <i class="ph ph-plus"></i>
+        </button>
+        <button class="tool-btn" onclick="resetView()" style="font-size:10px; padding:4px 8px;">RESET</button>
+
+        <div class="divider"></div>
+
+        <button class="tool-btn" onclick="toggleGridSnap()" id="btn-grid-snap" style="background:#5a5a5a;">Grid: OFF</button>
+        <button class="tool-btn" onclick="toggleSnap()" id="btn-snap" style="background:#5a5a5a;">Obj Snap: ON</button>
+        
+        <div class="divider"></div>
+        
+        <button class="tool-btn" onclick="document.getElementById('img-upload').click()">Import Image</button>
+        <input type="file" id="img-upload" hidden accept="image/*" onchange="handleImageUpload(this)">
+        <button class="tool-btn" style="color:var(--accent-gold); border-color:var(--accent-gold);" onclick="exportCanvas()">EXPORT PNG</button>
+
+        <div class="divider"></div>
+        <button class="tool-btn discord-btn" onclick="window.open('https://discord.com/invite/4R8jrRsXZb', '_blank')">Join Discord</button>
+    </div>
+</header>
+
+<div class="main-container">
+    <div class="sidebar-left">
+        <div class="tab-header">
+            <button class="tab-btn active">Assets</button>
+        </div>
+        <div class="asset-list">
+            
+            <div class="category-title">Ore UI Controls</div>
+            <div class="asset-grid">
+                <button class="tool-btn" onclick="addAsset('text')">Text Label</button>
+                <button class="tool-btn" onclick="addAsset('button')">Button</button>
+                <button class="tool-btn" onclick="addAsset('btn_action')">Action Btn</button>
+                <button class="tool-btn" onclick="addAsset('btn_destruct')">Destruct Btn</button>
+                <button class="tool-btn" onclick="addAsset('panel_dark')">Dark Panel</button>
+                <button class="tool-btn" onclick="addAsset('panel_light')">Light Panel</button>
+            </div>
+
+            <div class="category-title">Forms & Input</div>
+            <div class="asset-grid">
+                <button class="tool-btn" onclick="addAsset('input')">Input Field</button>
+                <button class="tool-btn" onclick="addAsset('toggle')">Toggle Switch</button>
+                <button class="tool-btn" onclick="addAsset('checkbox')">Checkbox</button>
+                <button class="tool-btn" onclick="addAsset('radio')">Radio Btn</button>
+                <button class="tool-btn" onclick="addAsset('slider')">Slider</button>
+                <button class="tool-btn" onclick="addAsset('dropdown')">Dropdown</button>
+            </div>
+
+            <div class="category-title">Inventory & HUD</div>
+            <div class="asset-grid">
+                <button class="tool-btn" onclick="addAsset('slot')">Item Slot</button>
+                <button class="tool-btn" onclick="addAsset('header')">Header Bar</button>
+                <button class="tool-btn" onclick="addAsset('close_btn')">Close [X]</button>
+                <button class="tool-btn" onclick="addAsset('health')">Hearts</button>
+                <button class="tool-btn" onclick="addAsset('xp_bar')">XP Bar</button>
+                <button class="tool-btn" onclick="addAsset('tooltip')">Tooltip Box</button>
+            </div>
+
+             <div class="category-title">Helpers</div>
+             <button class="tool-btn" style="width:100%" onclick="addAsset('placeholder')">Image Placeholder</button>
+        </div>
+    </div>
+
+    <div class="canvas-wrapper" id="canvas-wrapper" onmousedown="handleWrapperDown(event)" onwheel="handleWheel(event)">
+        <div id="viewport-container">
+            <div id="artboard" onmousedown="handleCanvasDown(event)">
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-right">
+        <div class="panel-header">PROPERTIES</div>
+        <div class="props-container" id="props-panel">
+        </div>
+
+        <div class="panel-header">LAYERS</div>
+        <div class="layers-container" id="layers-list">
+        </div>
+    </div>
+</div>
+
+<script>
+    const state = {
+        elements: [], 
+        selectedId: null,
+        snapEnabled: true,
+        gridSnapEnabled: false,
+        snapThreshold: 8,
+        gridSize: 20,
+        idCounter: 0,
+        zoom: 1,
+        panX: 0,
+        panY: 0,
+        activeTool: 'select', 
+        canvasW: 1280,
+        canvasH: 720,
+        canvasBg: '#48494a'
+    };
+
+    const artboard = document.getElementById('artboard');
+    const viewport = document.getElementById('viewport-container');
+    const wrapper = document.getElementById('canvas-wrapper');
+    const propsPanel = document.getElementById('props-panel');
+    const layersList = document.getElementById('layers-list');
+    const guideV = document.getElementById('guide-v');
+    const guideH = document.getElementById('guide-h');
+    const zoomDisplay = document.getElementById('zoom-level');
+
+    updateViewportTransform();
+    refreshPropsPanel(); 
+
+    function setTool(tool) {
+        state.activeTool = tool;
+        document.getElementById('tool-select').classList.toggle('active', tool === 'select');
+        document.getElementById('tool-pan').classList.toggle('active', tool === 'pan');
+        
+        wrapper.className = 'canvas-wrapper ' + (tool === 'pan' ? 'pan-mode' : '');
+    }
+
+    function adjustZoom(delta, centerPoint = null) {
+        const oldZoom = state.zoom;
+        let newZoom = oldZoom + delta;
+        newZoom = Math.max(0.2, Math.min(newZoom, 4.0)); 
+        
+        if (newZoom === oldZoom) return;
+
+        const wrapRect = wrapper.getBoundingClientRect();
+        const cx = wrapRect.width / 2;
+        const cy = wrapRect.height / 2;
+        
+        let mouseRelX = 0;
+        let mouseRelY = 0;
+        
+        if (centerPoint) {
+            mouseRelX = (centerPoint.x - wrapRect.left) - cx;
+            mouseRelY = (centerPoint.y - wrapRect.top) - cy;
+        }
+
+        const scaleFactor = newZoom / oldZoom;
+        
+        state.panX = mouseRelX - (mouseRelX - state.panX) * scaleFactor;
+        state.panY = mouseRelY - (mouseRelY - state.panY) * scaleFactor;
+        
+        state.zoom = newZoom;
+        updateViewportTransform();
+    }
+
+    function resetView() {
+        state.zoom = 1;
+        state.panX = 0;
+        state.panY = 0;
+        updateViewportTransform();
+    }
+
+    function handleWheel(e) {
+        if (e.ctrlKey || e.metaKey || state.activeTool === 'pan' || true) {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            adjustZoom(delta, { x: e.clientX, y: e.clientY });
+        }
+    }
+
+    function updateViewportTransform() {
+        const wrapRect = wrapper.getBoundingClientRect();
+        const cx = wrapRect.width / 2;
+        const cy = wrapRect.height / 2;
+        
+        viewport.style.transform = `translate(${cx + state.panX}px, ${cy + state.panY}px) scale(${state.zoom})`;
+        zoomDisplay.innerText = Math.round(state.zoom * 100) + '%';
+    }
+
+    function handleWrapperDown(e) {
+        if (state.activeTool === 'pan' || e.button === 1 || (e.button === 0 && e.target === wrapper)) {
+            e.preventDefault();
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const initialPanX = state.panX;
+            const initialPanY = state.panY;
+            
+            wrapper.style.cursor = 'grabbing';
+
+            const onMove = (ev) => {
+                state.panX = initialPanX + (ev.clientX - startX);
+                state.panY = initialPanY + (ev.clientY - startY);
+                updateViewportTransform();
+            };
+
+            const onUp = () => {
+                wrapper.style.cursor = state.activeTool === 'pan' ? 'grab' : 'default';
+                window.removeEventListener('mousemove', onMove);
+                window.removeEventListener('mouseup', onUp);
+            };
+
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onUp);
+        }
+    }
+
+    function addAsset(type, existingImg = null) {
+        state.idCounter++;
+        const id = 'el_' + state.idCounter;
+        
+        let w = 100, h = 40, props = { text: 'Label', bg: '#ffffff', color: '#ffffff', fontSize: 20, opacity: 1, radius: 0 };
+        
+        if (type === 'text') { w=200; h=40; props.text = "New Text"; props.fontSize = 32; }
+        if (type === 'button') { w=200; h=50; props.text = "Button"; props.bg = "#d0d1d4"; }
+        if (type === 'btn_action') { w=200; h=50; props.text = "Confirm"; }
+        if (type === 'btn_destruct') { w=200; h=50; props.text = "Delete"; }
+        if (type === 'panel_dark') { w=300; h=200; props.bg = "#212121"; }
+        if (type === 'panel_light') { w=300; h=200; props.bg = "#c6c6c6"; }
+        if (type === 'slot') { w=60; h=60; }
+        if (type === 'toggle') { w=60; h=30; props.toggled = false; }
+        if (type === 'checkbox') { w=30; h=30; props.toggled = false; }
+        if (type === 'radio') { w=30; h=30; props.toggled = false; }
+        if (type === 'slider') { w=200; h=24; props.val = 50; }
+        if (type === 'header') { w=400; h=40; props.text = "Inventory"; }
+        if (type === 'close_btn') { w=30; h=30; props.text = "X"; props.bg = "#c13131"; }
+        if (type === 'input') { w=200; h=40; props.text = ""; props.placeholder = "Search..."; }
+        if (type === 'xp_bar') { w=400; h=10; props.val = 75; props.color = "#00aa00"; }
+        if (type === 'health') { w=180; h=18; props.val=10; }
+        if (type === 'tooltip') { w=200; h=100; props.text = "Item Name\nLore line 1..."; props.bg="#111"; }
+        if (type === 'dropdown') { w=200; h=30; props.text = "Option A"; }
+        if (type === 'image') { w=existingImg.width; h=existingImg.height; props.src = existingImg.src; }
+        
+        const newEl = {
+            id, type,
+            x: Math.round((state.canvasW/2) - (w/2)),
+            y: Math.round((state.canvasH/2) - (h/2)),
+            w: w, h: h,
+            zIndex: state.elements.length + 1,
+            visible: true,
+            props: props
+        };
+
+        if(type === 'image' && newEl.w > 600) {
+            const ratio = newEl.h / newEl.w;
+            newEl.w = 600;
+            newEl.h = 600 * ratio;
+        }
+
+        if (state.gridSnapEnabled) {
+             newEl.x = Math.round(newEl.x / state.gridSize) * state.gridSize;
+             newEl.y = Math.round(newEl.y / state.gridSize) * state.gridSize;
+        }
+
+        state.elements.push(newEl);
+        renderElementDOM(newEl);
+        renderLayers();
+        selectElement(id);
+    }
+
+    function renderElementDOM(elData) {
+        const div = document.createElement('div');
+        div.id = elData.id;
+        div.className = 'el-wrapper';
+        div.style.zIndex = elData.zIndex;
+        div.innerHTML = getInnerHtml(elData) + 
+            `<div class="resize-handle rh-nw" data-dir="nw"></div>
+             <div class="resize-handle rh-ne" data-dir="ne"></div>
+             <div class="resize-handle rh-sw" data-dir="sw"></div>
+             <div class="resize-handle rh-se" data-dir="se"></div>`;
+
+        updateDOMTransform(div, elData);
+        div.onmousedown = (e) => startDrag(e, elData.id);
+        artboard.appendChild(div);
+    }
+
+    function getInnerHtml(data) {
+        const p = data.props;
+        switch (data.type) {
+            case 'text': return `<div class="ore-text" style="font-size:${p.fontSize}px; color:${p.color}; display:flex; align-items:center;">${p.text}</div>`;
+            case 'button': return `<div class="ore-btn" style="background:${p.bg};">${p.text}</div>`;
+            case 'btn_action': return `<div class="ore-btn-action">${p.text}</div>`;
+            case 'btn_destruct': return `<div class="ore-btn-destruct">${p.text}</div>`;
+            case 'panel_dark': return `<div class="ore-panel" style="background:${p.bg}; opacity:${p.opacity}"></div>`;
+            case 'panel_light': return `<div class="ore-panel-light" style="background:${p.bg}; opacity:${p.opacity}"></div>`;
+            case 'slot': return `<div class="ore-slot"></div>`;
+            case 'header': return `<div style="background:#313233; border-bottom:2px solid #555; width:100%; height:100%; display:flex; align-items:center; padding-left:10px; font-family:var(--font-mc); color:#eee; font-size:14px;">${p.text}</div>`;
+            case 'close_btn': return `<div class="ore-btn" style="background:#c13131; color:white;">X</div>`;
+            case 'toggle': return `<div class="ore-toggle ${p.toggled?'on':''}"><div class="ore-toggle-handle" style="left:${p.toggled?'50%':'0'}"></div></div>`;
+            case 'checkbox': return `<div class="ore-checkbox ${p.toggled?'checked':''}"></div>`;
+            case 'radio': return `<div class="ore-radio ${p.toggled?'checked':''}"></div>`;
+            case 'dropdown': return `<div class="ore-dropdown"><span>${p.text}</span><i class="ph ph-caret-down"></i></div>`;
+            case 'slider': return `<div style="background:#222; border:2px solid #fff; width:100%; height:100%; position:relative;"><div style="width:20px; height:130%; background:#ccc; border:2px solid #000; position:absolute; top:-15%; left:${p.val}%;"></div></div>`;
+            case 'input': return `<div style="background:#1e1e1f; border:2px solid #5e5e5e; width:100%; height:100%; color:#fff; display:flex; align-items:center; padding-left:10px; font-family:var(--font-ui);">${p.text || '<span style="color:#666">'+p.placeholder+'</span>'}</div>`;
+            case 'xp_bar': return `<div class="ore-bar-bg"><div class="ore-bar-fill" style="width:${p.val}%; background:#00aa00;"></div></div>`;
+            case 'health': return generateIcons('heart', p.val, 10);
+            case 'tooltip': return `<div class="ore-tooltip">${p.text}</div>`;
+            case 'image': return `<div style="width:100%; height:100%; background-image:url(${p.src}); background-size:cover; background-position:center; pointer-events:none;"></div>`;
+            default: return `<div style="border:1px dashed #666; width:100%; height:100%;"></div>`;
+        }
+    }
+
+    function generateIcons(type, val, max) {
+        let svgPath = '';
+        let color = '';
+        
+        if (type === 'heart') {
+            color = '#ff2222';
+            svgPath = '<path d="M4 2h4v2h2v2h-2v2h-2v2h-2v-2h-2v-4h2z m6 0h4v2h2v4h-2v2h-2v2h-2v-2h-2v-2h2v-2h2v-2z" fill="currentColor"/><path d="M2 4h2v2h-2z m12 0h2v2h-2z" fill="currentColor"/>'; 
+        }
+
+        let html = '<div style="display:flex; gap:1px; width:100%; height:100%;">';
+        for(let i=0; i<max; i++) {
+            let style = i < val ? `color:${color};` : `color:#333; opacity:0.3; background:rgba(0,0,0,0.5); border-radius:1px;`; 
+            html += `<div class="hud-icon" style="${style}"><svg viewBox="0 0 16 16">${svgPath}</svg></div>`;
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function updateDOMTransform(domEl, data) {
+        domEl.style.left = data.x + 'px';
+        domEl.style.top = data.y + 'px';
+        domEl.style.width = data.w + 'px';
+        domEl.style.height = data.h + 'px';
+        domEl.style.display = data.visible ? 'block' : 'none';
+        domEl.style.zIndex = data.zIndex;
+        
+        const inner = domEl.querySelector(':not(.resize-handle)');
+        if(inner) inner.outerHTML = getInnerHtml(data);
+    }
+
+    function startDrag(e, id) {
+        if(state.activeTool === 'pan') return; 
+        e.stopPropagation();
+        selectElement(id);
+        
+        const elData = state.elements.find(x => x.id === id);
+        
+        if (e.target.classList.contains('resize-handle')) {
+            startResize(e, elData, e.target.dataset.dir);
+            return;
+        }
+
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const origX = elData.x;
+        const origY = elData.y;
+        
+        const targetsX = [
+            { val: 0, type: 'edge' }, { val: state.canvasW, type: 'edge' }, 
+            { val: state.canvasW / 2, type: 'center' } 
+        ];
+        const targetsY = [
+            { val: 0, type: 'edge' }, { val: state.canvasH, type: 'edge' },
+            { val: state.canvasH / 2, type: 'center' }
+        ];
+
+        state.elements.forEach(other => {
+            if (other.id === id || !other.visible) return;
+            targetsX.push({ val: other.x, type: 'edge' }); 
+            targetsX.push({ val: other.x + other.w, type: 'edge' }); 
+            targetsX.push({ val: other.x + (other.w/2), type: 'center' }); 
+            
+            targetsY.push({ val: other.y, type: 'edge' });
+            targetsY.push({ val: other.y + other.h, type: 'edge' });
+            targetsY.push({ val: other.y + (other.h/2), type: 'center' });
+        });
+
+        const onMove = (ev) => {
+            const dx = (ev.clientX - startX) / state.zoom;
+            const dy = (ev.clientY - startY) / state.zoom;
+
+            let nx = origX + dx;
+            let ny = origY + dy;
+
+            if (state.gridSnapEnabled) {
+                nx = Math.round(nx / state.gridSize) * state.gridSize;
+                ny = Math.round(ny / state.gridSize) * state.gridSize;
+            } else {
+                let snappedX = false;
+                let snappedY = false;
+
+                guideV.style.display = 'none';
+                guideH.style.display = 'none';
+
+                if (state.snapEnabled) {
+                    const threshold = state.snapThreshold / state.zoom; 
+                    
+                    const myL = nx; 
+                    const myR = nx + elData.w; 
+                    const myCX = nx + (elData.w / 2);
+                    
+                    const myT = ny;
+                    const myB = ny + elData.h;
+                    const myCY = ny + (elData.h / 2);
+
+                    for (let t of targetsX) {
+                        if (Math.abs(myL - t.val) < threshold) { nx = t.val; snappedX = t.val; break; }
+                        if (Math.abs(myR - t.val) < threshold) { nx = t.val - elData.w; snappedX = t.val; break; }
+                        if (Math.abs(myCX - t.val) < threshold) { nx = t.val - (elData.w/2); snappedX = t.val; break; }
+                    }
+
+                    for (let t of targetsY) {
+                        if (Math.abs(myT - t.val) < threshold) { ny = t.val; snappedY = t.val; break; }
+                        if (Math.abs(myB - t.val) < threshold) { ny = t.val - elData.h; snappedY = t.val; break; }
+                        if (Math.abs(myCY - t.val) < threshold) { ny = t.val - (elData.h/2); snappedY = t.val; break; }
+                    }
+
+                    if (snappedX !== false) {
+                        const artRect = artboard.getBoundingClientRect();
+                        const screenX = artRect.left + (snappedX * state.zoom);
+                        
+                        guideV.style.left = screenX + 'px';
+                        guideV.style.display = 'block';
+                    }
+                    
+                    if (snappedY !== false) {
+                        const artRect = artboard.getBoundingClientRect();
+                        const screenY = artRect.top + (snappedY * state.zoom);
+                        
+                        guideH.style.top = screenY + 'px';
+                        guideH.style.display = 'block';
+                    }
+                }
+            }
+
+            elData.x = Math.round(nx);
+            elData.y = Math.round(ny);
+            
+            const dom = document.getElementById(id);
+            dom.style.left = elData.x + 'px';
+            dom.style.top = elData.y + 'px';
+            
+            const xInput = document.getElementById('prop-x');
+            if(xInput) { xInput.value = elData.x; document.getElementById('prop-y').value = elData.y; }
+        };
+
+        const onUp = () => {
+            guideV.style.display = 'none';
+            guideH.style.display = 'none';
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onUp);
+        };
+
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+    }
+
+    function startResize(e, data, dir) {
+        e.stopPropagation();
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startW = data.w;
+        const startH = data.h;
+        const startXPos = data.x;
+        const startYPos = data.y;
+
+        const onMove = (ev) => {
+            const dx = (ev.clientX - startX) / state.zoom;
+            const dy = (ev.clientY - startY) / state.zoom;
+            
+            let newW = startW;
+            let newH = startH;
+            let newX = startXPos;
+            let newY = startYPos;
+
+            if (dir.includes('e')) newW = startW + dx;
+            if (dir.includes('s')) newH = startH + dy;
+            if (dir.includes('w')) { newW = startW - dx; newX = startXPos + dx; }
+            if (dir.includes('n')) { newH = startH - dy; newY = startYPos + dy; }
+
+            if (newW < 20) newW = 20;
+            if (newH < 20) newH = 20;
+            
+            if (state.gridSnapEnabled) {
+                newW = Math.round(newW / state.gridSize) * state.gridSize;
+                newH = Math.round(newH / state.gridSize) * state.gridSize;
+                newX = Math.round(newX / state.gridSize) * state.gridSize;
+                newY = Math.round(newY / state.gridSize) * state.gridSize;
+            }
+
+            data.w = Math.round(newW);
+            data.h = Math.round(newH);
+            data.x = Math.round(newX);
+            data.y = Math.round(newY);
+
+            updateDOMTransform(document.getElementById(data.id), data);
+            refreshPropsPanel();
+        };
+
+        const onUp = () => {
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onUp);
+        };
+
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+    }
+
+    function selectElement(id) {
+        if (state.selectedId) {
+            const prev = document.getElementById(state.selectedId);
+            if (prev) prev.classList.remove('selected');
+        }
+        
+        state.selectedId = id;
+        
+        if (id) {
+            const curr = document.getElementById(id);
+            if (curr) curr.classList.add('selected');
+        }
+        refreshPropsPanel();
+        renderLayers();
+    }
+
+    function handleCanvasDown(e) {
+        if (state.activeTool === 'pan') return;
+        if (e.target === artboard) selectElement(null);
+    }
+
+    function refreshPropsPanel() {
+        if (!state.selectedId) {
+            propsPanel.innerHTML = `
+                <div class="category-title" style="margin-bottom:10px;">CANVAS SETTINGS</div>
+                <div class="control-group">
+                    <label class="control-label">Size (px)</label>
+                    <div class="control-row">
+                        <input type="number" value="${state.canvasW}" onchange="updateCanvasSize('w', this.value)" placeholder="W">
+                        <input type="number" value="${state.canvasH}" onchange="updateCanvasSize('h', this.value)" placeholder="H">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Background Color</label>
+                    <input type="color" value="${state.canvasBg.substring(0,7)}" onchange="updateCanvasBg(this.value)">
+                </div>
+                <div style="font-size:10px; color:#666; margin-top:15px; line-height:1.4;">
+                    <i class="ph ph-info"></i> Use the Hand tool (Top Bar) or Spacebar to pan around. Scroll to zoom.
+                </div>
+            `;
+            return;
+        }
+
+        const data = state.elements.find(x => x.id === state.selectedId);
+        const p = data.props;
+
+        let html = `
+            <div class="control-group">
+                <label class="control-label">Transform</label>
+                <div class="control-row">
+                    <input type="number" id="prop-x" value="${data.x}" onchange="updateData('x', this.value)" placeholder="X">
+                    <input type="number" id="prop-y" value="${data.y}" onchange="updateData('y', this.value)" placeholder="Y">
+                </div>
+                <div class="control-row" style="margin-top:4px;">
+                    <input type="number" id="prop-w" value="${data.w}" onchange="updateData('w', this.value)" placeholder="W">
+                    <input type="number" id="prop-h" value="${data.h}" onchange="updateData('h', this.value)" placeholder="H">
+                </div>
+            </div>
+            <div style="border-bottom:1px solid #333; margin:10px 0;"></div>
+        `;
+
+        if (data.type === 'tooltip') {
+             html += `
+                <div class="control-group">
+                    <label class="control-label">Content (Multi-line)</label>
+                    <textarea oninput="updateProp('text', this.value)" style="height:80px;">${p.text}</textarea>
+                </div>
+            `;
+        } else if (data.type === 'text' || data.type === 'button' || data.type === 'header' || data.type === 'input' || data.type.includes('btn') || data.type === 'dropdown') {
+            html += `
+                <div class="control-group">
+                    <label class="control-label">Content</label>
+                    <input type="text" value="${p.text}" oninput="updateProp('text', this.value)">
+                </div>
+            `;
+        }
+        
+        if (data.type === 'toggle' || data.type === 'checkbox' || data.type === 'radio') {
+             html += `
+                <div class="control-group">
+                    <label class="control-label">State</label>
+                    <button class="tool-btn" onclick="updateProp('toggled', !${p.toggled})">${p.toggled ? 'ON / Checked' : 'OFF / Unchecked'}</button>
+                </div>
+            `;
+        }
+
+        if (data.type === 'text') {
+            html += `
+                <div class="control-group">
+                    <label class="control-label">Font Size</label>
+                    <input type="number" value="${p.fontSize}" oninput="updateProp('fontSize', this.value)">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Color</label>
+                    <input type="color" value="${p.color}" oninput="updateProp('color', this.value)">
+                </div>
+            `;
+        }
+        
+        html += `
+            <div style="border-bottom:1px solid #333; margin:10px 0;"></div>
+            <div class="control-group">
+                <label class="control-label">Arrangement</label>
+                <div class="control-row">
+                    <button class="tool-btn" style="flex:1" onclick="changeOrder(1)">Front</button>
+                    <button class="tool-btn" style="flex:1" onclick="changeOrder(-1)">Back</button>
+                </div>
+                <button class="tool-btn" style="width:100%; margin-top:5px; background:#8b2a2a;" onclick="deleteSelected()">Delete Layer</button>
+            </div>
+        `;
+
+        propsPanel.innerHTML = html;
+    }
+
+    function updateCanvasSize(dim, val) {
+        val = parseInt(val);
+        if(dim === 'w') state.canvasW = val;
+        if(dim === 'h') state.canvasH = val;
+        artboard.style.width = state.canvasW + 'px';
+        artboard.style.height = state.canvasH + 'px';
+        updateViewportTransform(); 
+    }
+
+    function updateCanvasBg(val) {
+        state.canvasBg = val;
+        artboard.style.backgroundColor = val;
+    }
+
+    function updateData(key, val) {
+        if (!state.selectedId) return;
+        const data = state.elements.find(x => x.id === state.selectedId);
+        data[key] = parseInt(val);
+        updateDOMTransform(document.getElementById(data.id), data);
+    }
+
+    function updateProp(key, val) {
+        if (!state.selectedId) return;
+        const data = state.elements.find(x => x.id === state.selectedId);
+        data.props[key] = val;
+        updateDOMTransform(document.getElementById(data.id), data);
+        if(key === 'toggled') refreshPropsPanel();
+    }
+
+    function changeOrder(dir) {
+        if (!state.selectedId) return;
+        const data = state.elements.find(x => x.id === state.selectedId);
+        data.zIndex += dir;
+        updateDOMTransform(document.getElementById(data.id), data);
+    }
+
+    function deleteSelected() {
+        if (!state.selectedId) return;
+        const el = document.getElementById(state.selectedId);
+        el.remove();
+        state.elements = state.elements.filter(x => x.id !== state.selectedId);
+        selectElement(null);
+    }
+
+    function renderLayers() {
+        let html = '';
+        const sorted = [...state.elements].sort((a, b) => b.zIndex - a.zIndex);
+        sorted.forEach(el => {
+            const isActive = el.id === state.selectedId ? 'active' : '';
+            let name = el.type.toUpperCase();
+            if(el.props.text) name += `: ${el.props.text}`;
+            
+            html += `
+                <div class="layer-item ${isActive}" onclick="selectElement('${el.id}')">
+                    <div class="layer-icon" onclick="event.stopPropagation(); toggleVis('${el.id}')">
+                        ${el.visible ? '<i class="ph ph-eye"></i>' : '<i class="ph ph-eye-slash"></i>'}
+                    </div>
+                    <div class="layer-name">${name}</div>
+                    <div class="layer-actions"><span style="font-size:10px;">Z:${el.zIndex}</span></div>
+                </div>
+            `;
+        });
+        layersList.innerHTML = html;
+    }
+    
+    function toggleVis(id) {
+        const data = state.elements.find(x => x.id === id);
+        data.visible = !data.visible;
+        updateDOMTransform(document.getElementById(id), data);
+        renderLayers();
+    }
+
+    function toggleSnap() {
+        state.snapEnabled = !state.snapEnabled;
+        document.getElementById('btn-snap').innerText = state.snapEnabled ? "Obj Snap: ON" : "Obj Snap: OFF";
+        document.getElementById('btn-snap').style.color = state.snapEnabled ? "white" : "#999";
+    }
+
+    function toggleGridSnap() {
+        state.gridSnapEnabled = !state.gridSnapEnabled;
+        document.getElementById('btn-grid-snap').innerText = state.gridSnapEnabled ? "Grid: ON" : "Grid: OFF";
+        document.getElementById('btn-grid-snap').style.color = state.gridSnapEnabled ? "white" : "#999";
+        
+        if (state.gridSnapEnabled) {
+            state.snapEnabled = false;
+            document.getElementById('btn-snap').innerText = "Obj Snap: OFF";
+            document.getElementById('btn-snap').style.color = "#999";
+        }
+    }
+
+    function handleImageUpload(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => addAsset('image', img);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function exportCanvas() {
+        selectElement(null);
+        html2canvas(artboard, { scale: 2, backgroundColor: null }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = 'OreUI_Project.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') deleteSelected();
+        }
+        if (e.code === 'Space') {
+            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                setTool('pan');
+            }
+        }
+        if (e.key === 'v') if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') setTool('select');
+        if (e.key === 'h') if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') setTool('pan');
+    });
+
+    document.addEventListener('keyup', (e) => {
+        if (e.code === 'Space') {
+            setTool('select');
+        }
+    });
+
+    document.addEventListener('paste', (e) => {
+        const items = e.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const blob = items[i].getAsFile();
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                     const img = new Image();
+                     img.src = event.target.result;
+                     img.onload = () => addAsset('image', img);
+                };
+                reader.readAsDataURL(blob);
+            }
+        }
+    });
+
+</script>
+</body>
+</html>
