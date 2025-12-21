@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leo's Studio | OreUI Image Creator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Leo's Studio | OreUI Image</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Silkscreen&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -47,17 +47,21 @@
             align-items: center;
             padding: 0 15px;
             justify-content: space-between;
-            z-index: 20;
+            z-index: 60;
+            position: relative;
         }
 
         .brand { display: flex; align-items: center; gap: 10px; }
         .brand h1 { font-family: var(--font-mc); font-size: 14px; color: var(--accent-gold); margin: 0; text-shadow: 2px 2px #000; }
         .brand span { background: #444; padding: 2px 6px; border-radius: 4px; font-size: 10px; color: #fff; }
 
-        .toolbar-top { display: flex; gap: 10px; align-items: center; }
-        .divider { width: 1px; height: 24px; background: #555; margin: 0 4px; }
+        .toolbar-group { display: flex; gap: 10px; align-items: center; overflow-x: auto; padding-right: 10px; }
+        /* Hide scrollbar for toolbar but allow scroll */
+        .toolbar-group::-webkit-scrollbar { height: 0px; background: transparent; }
         
-        .main-container { display: flex; flex: 1; height: calc(100vh - 50px); }
+        .divider { width: 1px; height: 24px; background: #555; margin: 0 4px; flex-shrink: 0; }
+        
+        .main-container { display: flex; flex: 1; height: calc(100vh - 50px); position: relative; }
 
         .sidebar-left {
             width: 260px;
@@ -83,7 +87,7 @@
         .tool-btn {
             background: #3c3c3c; border: 1px solid #555; color: #ddd; padding: 8px; font-size: 11px; cursor: pointer;
             text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-            border-radius: 4px; transition: all 0.1s;
+            border-radius: 4px; transition: all 0.1s; flex-shrink: 0; white-space: nowrap;
         }
         .tool-btn.icon-only { width: 32px; height: 32px; padding: 0; }
         .tool-btn:hover { background: #4a4a4a; border-color: #777; }
@@ -92,6 +96,9 @@
 
         .discord-btn { background: #5865F2; border-color: #4752C4; color: white; }
         .discord-btn:hover { background: #4752C4; }
+
+        /* Mobile specific toggles */
+        .mobile-only { display: none; }
 
         .canvas-wrapper {
             flex: 1;
@@ -180,88 +187,108 @@
         .rh-se { bottom: -4px; right: -4px; cursor: se-resize; }
 
         .ore-text { font-family: var(--font-mc); color: #fff; text-shadow: 2px 2px #000; line-height: 1.2; pointer-events: none; width: 100%; height: 100%; }
-        
-        .ore-panel { 
-            background: #212121; border: 2px solid #111; box-shadow: inset 2px 2px #3c3c3c, inset -2px -2px #111; 
-            width: 100%; height: 100%; pointer-events: none;
-        }
-        .ore-panel-light { 
-            background: #c6c6c6; border: 2px solid #000; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; 
-            width: 100%; height: 100%; pointer-events: none;
-        }
-        
-        .ore-btn {
-            background: #d0d1d4; border: 2px solid #000; box-shadow: inset 2px 2px #fff, inset -2px -2px #555, inset -4px -4px #999;
-            color: #1e1e1e; font-family: var(--font-mc); display: flex; justify-content: center; align-items: center;
-            width: 100%; height: 100%; pointer-events: none;
-        }
-
-        .ore-btn-action {
-            background: #3c8527; border: 2px solid #18330f; box-shadow: inset 2px 2px #5abf3b, inset -2px -2px #18330f;
-            color: #fff; text-shadow: 1px 1px #000; font-family: var(--font-mc); display: flex; justify-content: center; align-items: center;
-            width: 100%; height: 100%; pointer-events: none;
-        }
-
-        .ore-btn-destruct {
-            background: #8b2a2a; border: 2px solid #331010; box-shadow: inset 2px 2px #c95b5b, inset -2px -2px #331010;
-            color: #fff; text-shadow: 1px 1px #000; font-family: var(--font-mc); display: flex; justify-content: center; align-items: center;
-            width: 100%; height: 100%; pointer-events: none;
-        }
-        
-        .ore-slot {
-            background: #8b8b8b; border: 2px solid #fff; border-top-color:#373737; border-left-color:#373737;
-            width: 100%; height: 100%; pointer-events: none; display: flex; justify-content: center; align-items: center;
-        }
-
+        .ore-panel { background: #212121; border: 2px solid #111; box-shadow: inset 2px 2px #3c3c3c, inset -2px -2px #111; width: 100%; height: 100%; pointer-events: none; }
+        .ore-panel-light { background: #c6c6c6; border: 2px solid #000; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; width: 100%; height: 100%; pointer-events: none; }
+        .ore-btn { background: #d0d1d4; border: 2px solid #000; box-shadow: inset 2px 2px #fff, inset -2px -2px #555, inset -4px -4px #999; color: #1e1e1e; font-family: var(--font-mc); display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; pointer-events: none; }
+        .ore-btn-action { background: #3c8527; border: 2px solid #18330f; box-shadow: inset 2px 2px #5abf3b, inset -2px -2px #18330f; color: #fff; text-shadow: 1px 1px #000; font-family: var(--font-mc); display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; pointer-events: none; }
+        .ore-btn-destruct { background: #8b2a2a; border: 2px solid #331010; box-shadow: inset 2px 2px #c95b5b, inset -2px -2px #331010; color: #fff; text-shadow: 1px 1px #000; font-family: var(--font-mc); display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; pointer-events: none; }
+        .ore-slot { background: #8b8b8b; border: 2px solid #fff; border-top-color:#373737; border-left-color:#373737; width: 100%; height: 100%; pointer-events: none; display: flex; justify-content: center; align-items: center; }
         .ore-bar-bg { background: #333; border: 2px solid #fff; width: 100%; height: 100%; position: relative; pointer-events: none; }
         .ore-bar-fill { height: 100%; background: #00aa00; position: absolute; top: 0; left: 0; }
-        
-        .ore-toggle { 
-            background: #5e5e5e; border: 2px solid #1e1e1e; width: 100%; height: 100%; position: relative; pointer-events: none;
-        }
+        .ore-toggle { background: #5e5e5e; border: 2px solid #1e1e1e; width: 100%; height: 100%; position: relative; pointer-events: none; }
         .ore-toggle.on { background: #00aa00; }
         .ore-toggle-handle { width: 50%; height: 100%; background: #ddd; border: 2px solid #000; position: absolute; left: 0; }
-        
-        .ore-checkbox {
-            width: 100%; height: 100%; background: #222; border: 2px solid #888; display: flex; align-items: center; justify-content: center;
-            pointer-events: none;
-        }
-        .ore-checkbox.checked::after {
-            content: ''; width: 60%; height: 60%; background: #3c8527; box-shadow: inset 1px 1px #5abf3b;
-        }
-
-        .ore-radio {
-            width: 100%; height: 100%; background: #222; border: 2px solid #888; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            pointer-events: none;
-        }
-        .ore-radio.checked::after {
-            content: ''; width: 50%; height: 50%; background: #fff; border-radius: 50%;
-        }
-
-        .ore-dropdown {
-            width: 100%; height: 100%; background: #333; border: 2px solid #111; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 8px;
-            font-family: var(--font-mc); font-size: 10px; pointer-events: none;
-        }
-
+        .ore-checkbox { width: 100%; height: 100%; background: #222; border: 2px solid #888; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+        .ore-checkbox.checked::after { content: ''; width: 60%; height: 60%; background: #3c8527; box-shadow: inset 1px 1px #5abf3b; }
+        .ore-radio { width: 100%; height: 100%; background: #222; border: 2px solid #888; border-radius: 50%; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+        .ore-radio.checked::after { content: ''; width: 50%; height: 50%; background: #fff; border-radius: 50%; }
+        .ore-dropdown { width: 100%; height: 100%; background: #333; border: 2px solid #111; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; font-family: var(--font-mc); font-size: 10px; pointer-events: none; }
         .hud-icon svg { width: 100%; height: 100%; filter: drop-shadow(2px 2px 0px #000); }
         .hud-icon { width: 16px; height: 16px; display: inline-block; margin-right: 1px; }
-
         .ore-tooltip { background: #100010; border: 2px solid #2a002a; padding: 5px; color: #a020f0; font-family: var(--font-mc); font-size: 10px; white-space: pre-wrap; width: 100%; height: 100%; overflow: hidden; }
 
+        /* --- Device Selection Modal --- */
+        #device-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; font-family: var(--font-mc);
+        }
+        .mode-cards { display: flex; gap: 20px; margin-top: 30px; }
+        .mode-card {
+            background: #252526; border: 2px solid #444; padding: 30px;
+            border-radius: 10px; cursor: pointer; text-align: center;
+            transition: all 0.2s; width: 160px;
+        }
+        .mode-card:hover { border-color: var(--accent-gold); transform: translateY(-5px); background: #333; }
+        .mode-card i { font-size: 48px; margin-bottom: 15px; color: #aaa; display: block; }
+        .mode-card:hover i { color: var(--accent-gold); }
+        .mode-card span { font-size: 12px; color: #fff; }
+
+        /* --- Mobile Layout Styles --- */
+        body.mobile-mode .brand h1 { display: none; } /* Save space */
+        body.mobile-mode .brand span { font-size: 12px; font-weight: bold; background: transparent; padding: 0; }
+        
+        body.mobile-mode .sidebar-left {
+            position: absolute; left: 0; top: 50px; bottom: 0; height: calc(100vh - 50px);
+            transform: translateX(-100%); transition: transform 0.3s ease;
+            z-index: 50; width: 80%; max-width: 300px;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+        }
+        body.mobile-mode .sidebar-left.open { transform: translateX(0); }
+
+        body.mobile-mode .sidebar-right {
+            position: absolute; right: 0; top: 50px; bottom: 0; height: calc(100vh - 50px);
+            transform: translateX(100%); transition: transform 0.3s ease;
+            z-index: 50; width: 80%; max-width: 300px;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+        }
+        body.mobile-mode .sidebar-right.open { transform: translateX(0); }
+
+        body.mobile-mode .mobile-overlay {
+            position: fixed; top: 50px; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 40; display: none;
+        }
+        body.mobile-mode .mobile-overlay.active { display: block; }
+
+        body.mobile-mode .mobile-only { display: inline-flex; }
+        
     </style>
 </head>
 <body>
 
+<!-- Device Selection Modal -->
+<div id="device-modal">
+    <div style="font-size: 20px; color: var(--accent-gold); text-shadow: 2px 2px #000;">CHOOSE LAYOUT</div>
+    <div class="mode-cards">
+        <div class="mode-card" onclick="selectMode('desktop')">
+            <i class="ph ph-monitor"></i>
+            <span>DESKTOP</span>
+        </div>
+        <div class="mode-card" onclick="selectMode('mobile')">
+            <i class="ph ph-device-mobile"></i>
+            <span>MOBILE</span>
+        </div>
+    </div>
+</div>
+
+<div class="mobile-overlay" onclick="closeMobileSidebars()"></div>
 <div class="guide-line guide-v" id="guide-v"></div>
 <div class="guide-line guide-h" id="guide-h"></div>
 
 <header>
     <div class="brand">
+        <!-- Mobile Toggle Left -->
+        <button class="tool-btn icon-only mobile-only" onclick="toggleMobileSidebar('left')" style="margin-right: 8px;">
+            <i class="ph ph-list"></i>
+        </button>
         <h1>Leo's Studio</h1>
-        <span>OreUI Image Creator</span>
+        <span>OreUI v3.1</span>
     </div>
     
-    <div class="toolbar-top">
+    <div class="toolbar-group">
         <button class="tool-btn icon-only active" id="tool-select" onclick="setTool('select')" title="Select Tool (V)">
             <i class="ph ph-cursor"></i>
         </button>
@@ -293,13 +320,19 @@
 
         <div class="divider"></div>
         <button class="tool-btn discord-btn" onclick="window.open('https://discord.com/invite/4R8jrRsXZb', '_blank')">Join Discord</button>
+        
+        <!-- Mobile Toggle Right -->
+        <button class="tool-btn icon-only mobile-only" onclick="toggleMobileSidebar('right')" style="margin-left: 8px;">
+            <i class="ph ph-sliders"></i>
+        </button>
     </div>
 </header>
 
 <div class="main-container">
-    <div class="sidebar-left">
+    <div class="sidebar-left" id="sidebar-left">
         <div class="tab-header">
             <button class="tab-btn active">Assets</button>
+            <button class="tab-btn mobile-only" onclick="closeMobileSidebars()">Close</button>
         </div>
         <div class="asset-list">
             
@@ -345,8 +378,11 @@
         </div>
     </div>
 
-    <div class="sidebar-right">
-        <div class="panel-header">PROPERTIES</div>
+    <div class="sidebar-right" id="sidebar-right">
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+            PROPERTIES
+            <button class="tool-btn icon-only mobile-only" onclick="closeMobileSidebars()" style="height:20px; width:20px; line-height:1;">x</button>
+        </div>
         <div class="props-container" id="props-panel">
         </div>
 
@@ -382,6 +418,48 @@
     const guideV = document.getElementById('guide-v');
     const guideH = document.getElementById('guide-h');
     const zoomDisplay = document.getElementById('zoom-level');
+
+    // Layout Logic
+    function selectMode(mode) {
+        if(mode === 'mobile') {
+            document.body.classList.add('mobile-mode');
+            // Adjust Zoom for smaller screens
+            if(window.innerWidth < 800) state.zoom = 0.5;
+        } else {
+            document.body.classList.remove('mobile-mode');
+        }
+        document.getElementById('device-modal').style.display = 'none';
+        updateViewportTransform();
+        // Trigger resize
+        const resizeEvent = new Event('resize');
+        window.dispatchEvent(resizeEvent);
+    }
+
+    function toggleMobileSidebar(side) {
+        const left = document.getElementById('sidebar-left');
+        const right = document.getElementById('sidebar-right');
+        const overlay = document.querySelector('.mobile-overlay');
+        
+        if (side === 'left') {
+            left.classList.toggle('open');
+            right.classList.remove('open');
+        } else {
+            right.classList.toggle('open');
+            left.classList.remove('open');
+        }
+        
+        if (left.classList.contains('open') || right.classList.contains('open')) {
+            overlay.classList.add('active');
+        } else {
+            overlay.classList.remove('active');
+        }
+    }
+
+    function closeMobileSidebars() {
+        document.getElementById('sidebar-left').classList.remove('open');
+        document.getElementById('sidebar-right').classList.remove('open');
+        document.querySelector('.mobile-overlay').classList.remove('active');
+    }
 
     updateViewportTransform();
     refreshPropsPanel(); 
@@ -474,6 +552,9 @@
     }
 
     function addAsset(type, existingImg = null) {
+        // Auto-close sidebar on mobile when asset added
+        if(document.body.classList.contains('mobile-mode')) closeMobileSidebars();
+
         state.idCounter++;
         const id = 'el_' + state.idCounter;
         
@@ -929,16 +1010,12 @@
         const sorted = [...state.elements].sort((a, b) => b.zIndex - a.zIndex);
         sorted.forEach(el => {
             const isActive = el.id === state.selectedId ? 'active' : '';
-            let name = el.type.toUpperCase();
-            if(el.props.text) name += `: ${el.props.text}`;
-            
             html += `
                 <div class="layer-item ${isActive}" onclick="selectElement('${el.id}')">
                     <div class="layer-icon" onclick="event.stopPropagation(); toggleVis('${el.id}')">
                         ${el.visible ? '<i class="ph ph-eye"></i>' : '<i class="ph ph-eye-slash"></i>'}
                     </div>
-                    <div class="layer-name">${name}</div>
-                    <div class="layer-actions"><span style="font-size:10px;">Z:${el.zIndex}</span></div>
+                    <div class="layer-name">${el.type} ${el.props.text ? ': ' + el.props.text.substring(0,10) : ''}</div>
                 </div>
             `;
         });
