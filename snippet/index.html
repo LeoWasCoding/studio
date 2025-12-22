@@ -154,18 +154,16 @@
         const BIN_ID = "69498d37d0ea881f403a2e86";
         const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1452731590722584747/prfXvFd2Rh4ovyVYLGs9SHSbAYVkBkc-kUnrB04zOcx2XqvDvisrS1oEzJzxip-Kw_IC";
         
-        // Admin Config
         const ADMIN_USERNAME = "ExterLeo";
         
         let currentUser = null;
-        let adminKey = null; // Stored in memory/localstorage for session
+        let adminKey = null;
         let localSnippets = [];
 
         document.addEventListener('DOMContentLoaded', () => {
             const savedUser = localStorage.getItem('ls_user');
             if (savedUser) {
                 currentUser = savedUser;
-                // Check if admin session
                 if (currentUser === ADMIN_USERNAME) {
                     const savedKey = localStorage.getItem('ls_admin_key');
                     if (savedKey) adminKey = savedKey;
@@ -194,10 +192,7 @@
 
             if (!userIn || !passIn) { errBox.textContent = "Please enter credentials."; return; }
 
-            // Admin Login Flow
             if (userIn === ADMIN_USERNAME) {
-                // We treat the "password" as the API Key for the Admin
-                // Simple validation: Key usually starts with $2a$ or similar, or just trust length
                 if (passIn.length < 10) { errBox.textContent = "Invalid Admin Key format."; return; }
                 
                 adminKey = passIn;
@@ -206,7 +201,6 @@
                 return;
             }
 
-            // Regular User Flow (Local Storage Auth)
             const storedPass = localStorage.getItem(`user_${userIn}`);
             if (storedPass) {
                 if (storedPass === passIn) loginSuccess(userIn);
@@ -227,7 +221,7 @@
 
         function logout() {
             localStorage.removeItem('ls_user');
-            localStorage.removeItem('ls_admin_key'); // Clear admin key on logout
+            localStorage.removeItem('ls_admin_key');
             location.reload();
         }
 
@@ -346,7 +340,6 @@
                 const raw = document.getElementById('adminJsonPaste').value;
                 const newSnip = JSON.parse(raw);
                 
-                // Add to local list and push to cloud
                 localSnippets.unshift(newSnip);
                 
                 await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
