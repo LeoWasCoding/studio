@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leo's Studio | Bedrock Scripting Snippets</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        :root {
+            --bg-base: #1e1e1e;
+            --bg-panel: #2b2b2b;
+            --border-light: #3c3c3c;
+            --border-dark: #161616;
+            --mc-green: #3c8527;
+            --mc-green-hover: #2a641c;
+            --text-main: #e0e0e0;
+            --text-dim: #a0a0a0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .ore-panel {
+            background-color: #3b3b3b;
+            border: 2px solid;
+            border-color: #5b5b5b #1e1e1e #1e1e1e #5b5b5b;
+            box-shadow: inset 0 0 0 2px #2b2b2b;
+        }
+
+        .ore-input {
+            background-color: #1e1e1e;
+            border: 2px solid;
+            border-color: #161616 #5b5b5b #5b5b5b #161616;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+        }
+        
+        .ore-input:focus {
+            border-color: #5b5b5b #a0a0a0 #a0a0a0 #5b5b5b;
+        }
+
+        .ore-btn {
+            background-color: #3b3b3b;
+            border: 2px solid;
+            border-color: #5b5b5b #1e1e1e #1e1e1e #5b5b5b;
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: background 0.1s;
+            text-shadow: 1px 1px 0 #1e1e1e;
+        }
+
+        .ore-btn:hover {
+            background-color: #4a4a4a;
+            color: #ffffff;
+        }
+
+        .ore-btn:active {
+            border-color: #1e1e1e #5b5b5b #5b5b5b #1e1e1e;
+            background-color: #2b2b2b;
+            transform: translateY(1px);
+        }
+
+        .ore-btn-green {
+            background-color: var(--mc-green);
+            border-color: #5cb345 #1e4513 #1e4513 #5cb345;
+        }
+
+        .ore-btn-green:hover {
+            background-color: var(--mc-green-hover);
+        }
+
+        .ore-btn-danger {
+            background-color: #8f2121;
+            border-color: #c94f4f #4a0d0d #4a0d0d #c94f4f;
+        }
+
+        .ore-btn-danger:hover {
+            background-color: #a32a2a;
+        }
+
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e; 
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #4a4a4a; 
+            border: 2px solid #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5a5a5a; 
+        }
+
+        .hidden { display: none !important; }
+        
+        .loading-spinner {
+            border: 4px solid #3c3c3c;
+            border-top: 4px solid #3c8527;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 backdrop-blur-sm">
+        <div class="ore-panel p-8 w-96 text-center shadow-2xl">
+            <h1 class="text-2xl font-bold mb-1 text-white uppercase tracking-wider">Leo's Studio</h1>
+            <p class="text-sm text-gray-400 mb-6">Bedrock Scripting Snippets</p>
+            
+            <div class="space-y-4">
+                <input type="text" id="usernameInput" placeholder="Username" class="ore-input w-full p-3">
+                <input type="password" id="passwordInput" placeholder="Password" class="ore-input w-full p-3">
+                
+                <div class="flex gap-2 pt-2">
+                    <button onclick="handleAuth('login')" class="ore-btn ore-btn-green w-full py-2 font-bold">Login</button>
+                    <button onclick="handleAuth('signup')" class="ore-btn w-full py-2 font-bold">Sign Up</button>
+                </div>
+            </div>
+            <p id="authError" class="text-red-400 text-xs mt-4 h-4"></p>
+        </div>
+    </div>
+
+    <header class="bg-[#2b2b2b] border-b-2 border-[#161616] sticky top-0 z-40 shadow-lg">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="h-10 w-10 bg-[#3c3c3c] border-2 border-[#5b5b5b] flex items-center justify-center text-xl font-bold text-green-500">L</div>
+                <div>
+                    <h1 class="font-bold text-lg leading-none tracking-wide text-white">LEO'S STUDIO</h1>
+                    <span class="text-xs text-[#a0a0a0] uppercase tracking-wider">Bedrock Scripting</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div id="adminBadge" class="hidden px-3 py-1 bg-red-900 border border-red-500 text-red-200 text-xs font-bold uppercase rounded-sm">
+                    Admin Access
+                </div>
+                <div class="flex items-center gap-3 bg-[#1e1e1e] px-4 py-1.5 border border-[#3c3c3c]">
+                    <i class="fas fa-user text-gray-400"></i>
+                    <span id="displayUsername" class="font-mono text-sm text-white">Guest</span>
+                </div>
+                <button onclick="logout()" class="ore-btn px-3 py-1 text-xs">LOGOUT</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8">
+        
+        <div class="flex flex-col md:flex-row gap-4 mb-8">
+            <div class="flex-grow relative">
+                <input type="text" id="searchInput" onkeyup="filterSnippets()" placeholder="Search snippets (e.g., 'Form', 'Entity', 'Molang')..." class="ore-input w-full p-4 pl-12 text-lg shadow-inner">
+                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+            </div>
+            <button onclick="openUploadModal()" class="ore-btn ore-btn-green px-6 flex items-center gap-2 font-bold shadow-md whitespace-nowrap">
+                <i class="fas fa-plus"></i> NEW SNIPPET
+            </button>
+        </div>
+
+        <div id="loadingState" class="hidden flex flex-col items-center justify-center py-12">
+            <div class="loading-spinner mb-4"></div>
+            <p class="text-gray-400">Syncing with server...</p>
+        </div>
+
+        <div id="snippetGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+
+        <div id="emptyState" class="hidden text-center py-20 opacity-50">
+            <i class="fas fa-box-open text-6xl mb-4 text-gray-600"></i>
+            <h2 class="text-xl font-bold">No snippets found</h2>
+            <p>Try a different search term or upload a new one.</p>
+        </div>
+    </main>
+
+    <div id="uploadModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm hidden">
+        <div class="ore-panel w-full max-w-2xl p-0 shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b-2 border-[#1e1e1e] flex justify-between items-center bg-[#333]">
+                <h3 class="font-bold text-white">Create New Snippet</h3>
+                <button onclick="closeUploadModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto space-y-4">
+                <div>
+                    <label class="block text-xs uppercase text-gray-400 mb-1">Snippet Title</label>
+                    <input type="text" id="snipTitle" class="ore-input w-full p-2" placeholder="e.g., Exploding Cow">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs uppercase text-gray-400 mb-1">Category</label>
+                        <select id="snipCategory" class="ore-input w-full p-2">
+                            <option value="Entity Behavior">Entity Behavior</option>
+                            <option value="Script API">Script API (JS)</option>
+                            <option value="Molang">Molang</option>
+                            <option value="Items">Items</option>
+                            <option value="Recipes">Recipes</option>
+                            <option value="UI/Forms">UI/Forms</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-gray-400 mb-1">Version</label>
+                        <input type="text" id="snipVersion" class="ore-input w-full p-2" placeholder="e.g., 1.20.50">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs uppercase text-gray-400 mb-1">Code (JSON or JS)</label>
+                    <textarea id="snipCode" rows="10" class="ore-input w-full p-3 font-mono text-sm leading-relaxed" placeholder='{ "format_version": "1.20.50", ... }'></textarea>
+                </div>
+            </div>
+
+            <div class="p-4 border-t-2 border-[#1e1e1e] bg-[#2b2b2b] flex justify-end gap-3">
+                <button onclick="closeUploadModal()" class="ore-btn px-6 py-2">Cancel</button>
+                <button onclick="submitSnippet()" class="ore-btn ore-btn-green px-6 py-2 font-bold">Upload Snippet</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-auto border-t-2 border-[#161616] bg-[#1a1a1a] py-8 text-center">
+        <p class="text-gray-500 text-sm mb-2">&copy; 2024 Leo's Studio. All rights reserved.</p>
+        <p class="text-xs text-gray-600">Not affiliated with Mojang Studios.</p>
+    </footer>
+
+    <script>
+        let currentUser = null;
+        const ADMIN_USER = "ExterLeo";
+        let localSnippets = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('ls_user');
+            if (savedUser) {
+                currentUser = savedUser;
+                document.getElementById('loginOverlay').classList.add('hidden');
+                initApp();
+            } else {
+                document.getElementById('loginOverlay').classList.remove('hidden');
+            }
+        });
+
+        function handleAuth(type) {
+            const userIn = document.getElementById('usernameInput').value.trim();
+            const passIn = document.getElementById('passwordInput').value.trim();
+            const errBox = document.getElementById('authError');
+
+            if (!userIn || !passIn) {
+                errBox.textContent = "Please enter username and password.";
+                return;
+            }
+
+            if (type === 'signup') {
+                if (localStorage.getItem(`user_${userIn}`)) {
+                    errBox.textContent = "User already exists.";
+                    return;
+                }
+                localStorage.setItem(`user_${userIn}`, passIn);
+                loginSuccess(userIn);
+            } else {
+                const storedPass = localStorage.getItem(`user_${userIn}`);
+                if (storedPass === passIn || (userIn === ADMIN_USER && !storedPass)) {
+                    loginSuccess(userIn);
+                } else {
+                    errBox.textContent = "Invalid credentials.";
+                }
+            }
+        }
+
+        function loginSuccess(username) {
+            currentUser = username;
+            localStorage.setItem('ls_user', username);
+            document.getElementById('loginOverlay').classList.add('hidden');
+            initApp();
+        }
+
+        function logout() {
+            localStorage.removeItem('ls_user');
+            location.reload();
+        }
+
+        function initApp() {
+            document.getElementById('displayUsername').textContent = currentUser;
+            if (currentUser === ADMIN_USER) {
+                document.getElementById('adminBadge').classList.remove('hidden');
+            }
+            fetchSnippets();
+        }
+
+        async function fetchSnippets() {
+            const grid = document.getElementById('snippetGrid');
+            const loader = document.getElementById('loadingState');
+            
+            grid.innerHTML = '';
+            loader.classList.remove('hidden');
+            
+            try {
+                const response = await fetch('api.php');
+                localSnippets = await response.json();
+                renderSnippets();
+            } catch (err) {
+                console.error("Failed to load snippets", err);
+                grid.innerHTML = `<p class="text-red-500 text-center col-span-3">Error connecting to server database.</p>`;
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        function renderSnippets(searchTerm = '') {
+            const grid = document.getElementById('snippetGrid');
+            grid.innerHTML = '';
+
+            const filtered = localSnippets.filter(s => 
+                s.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                s.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                s.code.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            
+            if (filtered.length === 0) {
+                document.getElementById('emptyState').classList.remove('hidden');
+            } else {
+                document.getElementById('emptyState').classList.add('hidden');
+                filtered.forEach(snip => {
+                    const isAdmin = currentUser === ADMIN_USER;
+                    const card = document.createElement('div');
+                    card.className = 'ore-panel flex flex-col h-full transition hover:-translate-y-1';
+                    
+                    card.innerHTML = `
+                        <div class="p-4 border-b-2 border-[#1e1e1e] bg-[#333] flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-white text-lg truncate pr-2">${esc(snip.title)}</h3>
+                                <div class="flex gap-2 mt-1">
+                                    <span class="text-xs bg-[#1e1e1e] px-2 py-0.5 text-blue-300 border border-[#3c3c3c]">${esc(snip.category)}</span>
+                                    <span class="text-xs bg-[#1e1e1e] px-2 py-0.5 text-yellow-600 border border-[#3c3c3c]">${esc(snip.version)}</span>
+                                </div>
+                            </div>
+                            ${isAdmin ? `<button onclick="deleteSnippet(${snip.id})" class="text-red-500 hover:text-red-400 p-1"><i class="fas fa-trash"></i></button>` : ''}
+                        </div>
+                        <div class="p-0 flex-grow relative group">
+                            <textarea readonly class="w-full h-40 bg-[#161616] text-[#a0a0a0] p-4 font-mono text-sm resize-none focus:outline-none border-none">${esc(snip.code)}</textarea>
+                            <button onclick="copyToClipboard(this)" class="absolute top-2 right-2 ore-btn text-xs py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                        <div class="p-3 border-t-2 border-[#1e1e1e] bg-[#2b2b2b] flex justify-between items-center text-xs text-gray-500">
+                            <span>By <span class="text-gray-300">${esc(snip.author)}</span></span>
+                            <span>${snip.date}</span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+        }
+
+        async function submitSnippet() {
+            const title = document.getElementById('snipTitle').value;
+            const category = document.getElementById('snipCategory').value;
+            const version = document.getElementById('snipVersion').value;
+            const code = document.getElementById('snipCode').value;
+
+            if (!title || !code) {
+                alert("Title and Code are required!");
+                return;
+            }
+
+            const newSnippet = {
+                id: Date.now(),
+                title,
+                category,
+                version: version || "Unknown",
+                code,
+                author: currentUser,
+                date: new Date().toLocaleDateString()
+            };
+
+            try {
+                const res = await fetch('api.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ action: 'add', snippet: newSnippet })
+                });
+                
+                if (res.ok) {
+                    closeUploadModal();
+                    fetchSnippets(); 
+                } else {
+                    alert("Server error uploading snippet.");
+                }
+            } catch (err) {
+                alert("Connection failed.");
+            }
+        }
+
+        async function deleteSnippet(id) {
+            if (!confirm("Are you sure you want to delete this snippet?")) return;
+            
+            try {
+                const res = await fetch('api.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ action: 'delete', id: id, user: currentUser })
+                });
+
+                if (res.ok) {
+                    fetchSnippets();
+                } else {
+                    alert("Failed to delete. Check permissions.");
+                }
+            } catch (err) {
+                alert("Connection failed.");
+            }
+        }
+
+        function openUploadModal() { document.getElementById('uploadModal').classList.remove('hidden'); }
+        function closeUploadModal() { 
+            document.getElementById('uploadModal').classList.add('hidden');
+            document.getElementById('snipTitle').value = '';
+            document.getElementById('snipCode').value = '';
+            document.getElementById('snipVersion').value = '';
+        }
+        function filterSnippets() { renderSnippets(document.getElementById('searchInput').value); }
+        
+        function copyToClipboard(btn) {
+            const textarea = btn.parentElement.querySelector('textarea');
+            textarea.select();
+            document.execCommand('copy');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            btn.classList.add('text-green-400');
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('text-green-400');
+            }, 2000);
+        }
+
+        function esc(unsafe) {
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
