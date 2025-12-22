@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1700000000001,
+    "title": "Action Form (Script API)",
+    "category": "UI/Forms",
+    "version": "1.20.0",
+    "code": "import { ActionFormData } from \"@minecraft/server-ui\";\n\nconst form = new ActionFormData()\n  .title(\"Teleport Menu\")\n  .body(\"Choose a destination:\")\n  .button(\"Spawn\")\n  .button(\"Arena\");\n\nform.show(player).then(response => {\n  if (response.selection === 0) runCommand(\"tp @s 0 100 0\");\n});",
+    "author": "ExterLeo",
+    "date": "12/22/2024"
+  },
+  {
+    "id": 1700000000002,
+    "title": "Molang Rotation Math",
+    "category": "Molang",
+    "version": "1.19.0",
+    "code": "\"rotation\": [ \"Math.cos(query.anim_time * 20) * 10\", 0, 0 ]",
+    "author": "BedrockDev",
+    "date": "12/22/2024"
+  }
+]
