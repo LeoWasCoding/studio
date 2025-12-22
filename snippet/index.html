@@ -18,6 +18,7 @@
         .ore-btn:active { border-color: #1e1e1e #5b5b5b #5b5b5b #1e1e1e; background-color: #2b2b2b; transform: translateY(1px); }
         .ore-btn-green { background-color: var(--mc-green); border-color: #5cb345 #1e4513 #1e4513 #5cb345; }
         .ore-btn-green:hover { background-color: var(--mc-green-hover); }
+        .cat-btn.active { background-color: var(--mc-green); border-color: #5cb345 #1e4513 #1e4513 #5cb345; color: white; }
         ::-webkit-scrollbar { width: 12px; }
         ::-webkit-scrollbar-track { background: #1e1e1e; }
         ::-webkit-scrollbar-thumb { background: #4a4a4a; border: 2px solid #1e1e1e; }
@@ -64,7 +65,7 @@
     </header>
 
     <main class="flex-grow container mx-auto px-4 py-8">
-        <div class="flex flex-col md:flex-row gap-4 mb-8">
+        <div class="flex flex-col md:flex-row gap-4 mb-4">
             <div class="flex-grow relative">
                 <input type="text" id="searchInput" onkeyup="filterSnippets()" placeholder="Search snippets..." class="ore-input w-full p-4 pl-12 text-lg shadow-inner">
                 <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
@@ -79,6 +80,16 @@
             </div>
         </div>
 
+        <div class="flex gap-2 mb-8 overflow-x-auto pb-2" id="categoryBar">
+            <button onclick="setCategory('All')" class="ore-btn cat-btn active px-4 py-1 text-sm rounded-full">All</button>
+            <button onclick="setCategory('Entity Behavior')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full">Entity Behavior</button>
+            <button onclick="setCategory('Script API')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full">Script API</button>
+            <button onclick="setCategory('Molang')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full">Molang</button>
+            <button onclick="setCategory('Items')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full">Items</button>
+            <button onclick="setCategory('Recipes')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full">Recipes</button>
+            <button onclick="setCategory('UI/Forms')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full">UI/Forms</button>
+        </div>
+
         <div id="loadingState" class="hidden flex flex-col items-center justify-center py-12">
             <div class="loading-spinner mb-4"></div>
             <p class="text-gray-400">Syncing with cloud database...</p>
@@ -89,7 +100,7 @@
         <div id="emptyState" class="hidden text-center py-20 opacity-50">
             <i class="fas fa-box-open text-6xl mb-4 text-gray-600"></i>
             <h2 class="text-xl font-bold">No snippets found</h2>
-            <p>Try a different search term or upload a new one.</p>
+            <p>Try a different category or search term.</p>
         </div>
     </main>
 
@@ -151,14 +162,15 @@
     </div>
 
     <script>
+        // CONFIG
         const BIN_ID = "69498d37d0ea881f403a2e86";
         const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1452731590722584747/prfXvFd2Rh4ovyVYLGs9SHSbAYVkBkc-kUnrB04zOcx2XqvDvisrS1oEzJzxip-Kw_IC";
-        
         const ADMIN_USERNAME = "ExterLeo";
         
         let currentUser = null;
         let adminKey = null;
         let localSnippets = [];
+        let currentCategory = 'All';
 
         document.addEventListener('DOMContentLoaded', () => {
             const savedUser = localStorage.getItem('ls_user');
@@ -175,6 +187,7 @@
             }
         });
 
+        // --- AUTH ---
         function checkAdminUser() {
             const input = document.getElementById('usernameInput');
             const passInput = document.getElementById('passwordInput');
@@ -194,7 +207,6 @@
 
             if (userIn === ADMIN_USERNAME) {
                 if (passIn.length < 10) { errBox.textContent = "Invalid Admin Key format."; return; }
-                
                 adminKey = passIn;
                 localStorage.setItem('ls_admin_key', adminKey);
                 loginSuccess(userIn);
@@ -206,7 +218,6 @@
                 if (storedPass === passIn) loginSuccess(userIn);
                 else errBox.textContent = "Incorrect password.";
             } else {
-                // New User (Sign Up)
                 localStorage.setItem(`user_${userIn}`, passIn);
                 loginSuccess(userIn);
             }
@@ -225,6 +236,7 @@
             location.reload();
         }
 
+        // --- APP LOGIC ---
         function initApp() {
             document.getElementById('displayUsername').textContent = currentUser;
             if (currentUser === ADMIN_USERNAME && adminKey) {
@@ -253,13 +265,27 @@
             }
         }
 
+        function setCategory(cat) {
+            currentCategory = cat;
+            const buttons = document.querySelectorAll('.cat-btn');
+            buttons.forEach(btn => {
+                if(btn.innerText === cat) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            renderSnippets(document.getElementById('searchInput').value);
+        }
+
         function renderSnippets(searchTerm = '') {
             const grid = document.getElementById('snippetGrid');
             grid.innerHTML = '';
-            const filtered = localSnippets.filter(s => 
-                s.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                s.code.toLowerCase().includes(searchTerm.toLowerCase())
-            );
+            
+            const filtered = localSnippets.filter(s => {
+                const matchesSearch = s.title.toLowerCase().includes(searchTerm.toLowerCase()) || s.code.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesCat = currentCategory === 'All' || s.category === currentCategory;
+                return matchesSearch && matchesCat;
+            });
+
+            filtered.sort((a, b) => (b.votes || 0) - (a.votes || 0));
             
             if (filtered.length === 0) {
                 document.getElementById('emptyState').classList.remove('hidden');
@@ -267,28 +293,41 @@
                 document.getElementById('emptyState').classList.add('hidden');
                 filtered.forEach(snip => {
                     const isAdmin = (currentUser === ADMIN_USERNAME && adminKey);
+                    const voteCount = snip.votes || 0;
+                    
                     const card = document.createElement('div');
-                    card.className = 'ore-panel flex flex-col h-full transition hover:-translate-y-1';
+                    card.className = 'ore-panel flex h-full transition';
                     card.innerHTML = `
-                        <div class="p-4 border-b-2 border-[#1e1e1e] bg-[#333] flex justify-between items-start">
-                            <div>
-                                <h3 class="font-bold text-white text-lg truncate pr-2">${esc(snip.title)}</h3>
-                                <div class="flex gap-2 mt-1">
-                                    <span class="text-xs bg-[#1e1e1e] px-2 py-0.5 text-blue-300 border border-[#3c3c3c]">${esc(snip.category)}</span>
-                                    <span class="text-xs bg-[#1e1e1e] px-2 py-0.5 text-yellow-600 border border-[#3c3c3c]">${esc(snip.version)}</span>
-                                </div>
-                            </div>
-                            ${isAdmin ? `<button onclick="adminDeleteSnippet(${snip.id})" class="text-red-500 hover:text-red-400 p-1"><i class="fas fa-trash"></i></button>` : ''}
-                        </div>
-                        <div class="p-0 flex-grow relative group">
-                            <textarea readonly class="w-full h-40 bg-[#161616] text-[#a0a0a0] p-4 font-mono text-sm resize-none focus:outline-none border-none">${esc(snip.code)}</textarea>
-                            <button onclick="copyToClipboard(this)" class="absolute top-2 right-2 ore-btn text-xs py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <i class="fas fa-copy"></i> Copy
+                        <div class="w-12 border-r-2 border-[#1e1e1e] bg-[#222] flex flex-col items-center p-2 gap-1">
+                            <button onclick="handleVote(${snip.id}, 1)" class="text-gray-500 hover:text-orange-500 transition ${isAdmin ? '' : 'cursor-not-allowed opacity-50'}">
+                                <i class="fas fa-caret-up text-2xl"></i>
+                            </button>
+                            <span class="font-bold text-sm ${voteCount > 0 ? 'text-orange-500' : (voteCount < 0 ? 'text-blue-500' : 'text-gray-400')}">${voteCount}</span>
+                            <button onclick="handleVote(${snip.id}, -1)" class="text-gray-500 hover:text-blue-500 transition ${isAdmin ? '' : 'cursor-not-allowed opacity-50'}">
+                                <i class="fas fa-caret-down text-2xl"></i>
                             </button>
                         </div>
-                        <div class="p-3 border-t-2 border-[#1e1e1e] bg-[#2b2b2b] flex justify-between items-center text-xs text-gray-500">
-                            <span>By <span class="text-gray-300">${esc(snip.author)}</span></span>
-                            <span>${snip.date}</span>
+                        <div class="flex-grow flex flex-col">
+                            <div class="p-4 border-b-2 border-[#1e1e1e] bg-[#333] flex justify-between items-start">
+                                <div class="overflow-hidden">
+                                    <h3 class="font-bold text-white text-lg truncate pr-2">${esc(snip.title)}</h3>
+                                    <div class="flex gap-2 mt-1 flex-wrap">
+                                        <span class="text-xs bg-[#1e1e1e] px-2 py-0.5 text-blue-300 border border-[#3c3c3c]">${esc(snip.category)}</span>
+                                        <span class="text-xs bg-[#1e1e1e] px-2 py-0.5 text-yellow-600 border border-[#3c3c3c]">${esc(snip.version)}</span>
+                                    </div>
+                                </div>
+                                ${isAdmin ? `<button onclick="adminDeleteSnippet(${snip.id})" class="text-red-500 hover:text-red-400 p-1 flex-shrink-0"><i class="fas fa-trash"></i></button>` : ''}
+                            </div>
+                            <div class="p-0 flex-grow relative group">
+                                <textarea readonly class="w-full h-40 bg-[#161616] text-[#a0a0a0] p-4 font-mono text-sm resize-none focus:outline-none border-none">${esc(snip.code)}</textarea>
+                                <button onclick="copyToClipboard(this)" class="absolute top-2 right-2 ore-btn text-xs py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                            <div class="p-3 border-t-2 border-[#1e1e1e] bg-[#2b2b2b] flex justify-between items-center text-xs text-gray-500">
+                                <span>By <span class="text-gray-300">${esc(snip.author)}</span></span>
+                                <span>${snip.date}</span>
+                            </div>
                         </div>
                     `;
                     grid.appendChild(card);
@@ -296,6 +335,39 @@
             }
         }
 
+        // --- VOTING LOGIC ---
+        async function handleVote(id, change) {
+            if (!adminKey || currentUser !== ADMIN_USERNAME) {
+                alert("Only the Admin can save votes to the cloud (Static Site Limitation).");
+                return;
+            }
+
+            const snipIndex = localSnippets.findIndex(s => s.id === id);
+            if (snipIndex === -1) return;
+
+            if (!localSnippets[snipIndex].votes) localSnippets[snipIndex].votes = 0;
+            localSnippets[snipIndex].votes += change;
+
+            renderSnippets(document.getElementById('searchInput').value);
+
+            try {
+                await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': adminKey
+                    },
+                    body: JSON.stringify(localSnippets)
+                });
+            } catch (e) {
+                alert("Failed to save vote to cloud.");
+
+                localSnippets[snipIndex].votes -= change;
+                renderSnippets();
+            }
+        }
+
+        // --- SUBMISSION ---
         async function submitSnippet() {
             const title = document.getElementById('snipTitle').value;
             const category = document.getElementById('snipCategory').value;
@@ -307,6 +379,7 @@
             const snippetData = {
                 id: Date.now(),
                 title, category, version: version || "Unknown", code,
+                votes: 0,
                 author: currentUser,
                 date: new Date().toLocaleDateString()
             };
@@ -334,11 +407,13 @@
             }
         }
 
+        // --- ADMIN FUNCTIONS ---
         async function adminPublishSnippet() {
             if (!adminKey) return;
             try {
                 const raw = document.getElementById('adminJsonPaste').value;
                 const newSnip = JSON.parse(raw);
+                if(!newSnip.votes) newSnip.votes = 0;
                 
                 localSnippets.unshift(newSnip);
                 
@@ -372,6 +447,7 @@
             } catch(e) { alert("Delete failed."); }
         }
 
+        // --- UTILS ---
         function openUploadModal() { document.getElementById('uploadModal').classList.remove('hidden'); }
         function closeUploadModal() { document.getElementById('uploadModal').classList.add('hidden'); }
         function openAdminModal() { document.getElementById('adminModal').classList.remove('hidden'); }
