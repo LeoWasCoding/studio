@@ -13,11 +13,13 @@
         .ore-panel { background-color: #3b3b3b; border: 2px solid; border-color: #5b5b5b #1e1e1e #1e1e1e #5b5b5b; box-shadow: inset 0 0 0 2px #2b2b2b; }
         .ore-input { background-color: #1e1e1e; border: 2px solid; border-color: #161616 #5b5b5b #5b5b5b #161616; color: white; outline: none; }
         .ore-input:focus { border-color: #5b5b5b #a0a0a0 #a0a0a0 #5b5b5b; }
-        .ore-btn { background-color: #3b3b3b; border: 2px solid; border-color: #5b5b5b #1e1e1e #1e1e1e #5b5b5b; color: #e0e0e0; cursor: pointer; text-shadow: 1px 1px 0 #1e1e1e; }
+        .ore-btn { background-color: #3b3b3b; border: 2px solid; border-color: #5b5b5b #1e1e1e #1e1e1e #5b5b5b; color: #e0e0e0; cursor: pointer; text-shadow: 1px 1px 0 #1e1e1e; display: inline-flex; justify-content: center; align-items: center; }
         .ore-btn:hover { background-color: #4a4a4a; color: #ffffff; }
         .ore-btn:active { border-color: #1e1e1e #5b5b5b #5b5b5b #1e1e1e; background-color: #2b2b2b; transform: translateY(1px); }
         .ore-btn-green { background-color: var(--mc-green); border-color: #5cb345 #1e4513 #1e4513 #5cb345; }
         .ore-btn-green:hover { background-color: var(--mc-green-hover); }
+        .ore-btn-discord { background-color: #5865F2; border-color: #7983f5 #3f48ad #3f48ad #7983f5; color: white; }
+        .ore-btn-discord:hover { background-color: #4752c4; }
         .cat-btn.active { background-color: var(--mc-green); border-color: #5cb345 #1e4513 #1e4513 #5cb345; color: white; }
         ::-webkit-scrollbar { width: 12px; }
         ::-webkit-scrollbar-track { background: #1e1e1e; }
@@ -25,7 +27,10 @@
         .hidden { display: none !important; }
         .loading-spinner { border: 4px solid #3c3c3c; border-top: 4px solid #3c8527; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .code-preview-box { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; line-height: 1.4; color: #a0a0a0; background-color: #161616; border: 2px solid #1e1e1e; padding: 0.75rem; overflow: hidden; white-space: pre-wrap; word-break: break-all; max-height: 140px; position: relative; cursor: pointer; transition: border-color 0.2s; }
+        .code-preview-box:hover { border-color: #5b5b5b; }
+        .code-fade-overlay { position: absolute; bottom: 0; left: 0; right: 0; height: 40px; background: linear-gradient(to bottom, transparent, #262626); pointer-events: none; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -71,10 +76,13 @@
                 <input type="text" id="searchInput" onkeyup="filterSnippets()" placeholder="Search snippets..." class="ore-input w-full p-4 pl-12 text-lg shadow-inner">
                 <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
             </div>
-            <div class="flex gap-2">
+            <div class="flex gap-2 flex-wrap sm:flex-nowrap">
                 <button id="adminImportBtn" onclick="openAdminModal()" class="hidden ore-btn bg-red-900 border-red-800 text-red-100 px-6 flex items-center gap-2 font-bold shadow-md whitespace-nowrap">
                     <i class="fas fa-file-import"></i> IMPORT
                 </button>
+                <a href="https://discord.gg/4R8jrRsXZb" target="_blank" class="ore-btn ore-btn-discord px-6 flex items-center gap-2 font-bold shadow-md whitespace-nowrap text-decoration-none">
+                    <i class="fab fa-discord"></i> JOIN DISCORD
+                </a>
                 <button onclick="openUploadModal()" class="ore-btn ore-btn-green px-6 flex items-center gap-2 font-bold shadow-md whitespace-nowrap">
                     <i class="fas fa-plus"></i> NEW SNIPPET
                 </button>
@@ -332,7 +340,7 @@
                     const downClass = myVote === -1 ? 'text-blue-500' : 'text-gray-500 hover:text-blue-500';
 
                     const card = document.createElement('div');
-                    card.className = 'ore-panel flex h-64 transition';
+                    card.className = 'ore-panel flex h-80 transition';
                     card.innerHTML = `
                         <div class="w-12 border-r-2 border-[#1e1e1e] bg-[#222] flex flex-col items-center p-2 gap-1">
                             <button onclick="handleVote(${snip.id}, 1)" class="${upClass} transition">
@@ -344,7 +352,7 @@
                             </button>
                         </div>
                         <div class="flex-grow flex flex-col relative">
-                            <div class="p-4 border-b-2 border-[#1e1e1e] bg-[#333] flex justify-between items-start">
+                            <div class="p-3 border-b-2 border-[#1e1e1e] bg-[#333] flex justify-between items-start">
                                 <div class="overflow-hidden">
                                     <h3 class="font-bold text-white text-lg truncate pr-2">${esc(snip.title)}</h3>
                                     <div class="flex gap-2 mt-1 flex-wrap">
@@ -354,11 +362,15 @@
                                 </div>
                                 ${isAdmin ? `<button onclick="adminDeleteSnippet(${snip.id})" class="text-red-500 hover:text-red-400 p-1 flex-shrink-0"><i class="fas fa-trash"></i></button>` : ''}
                             </div>
-                            <div class="p-4 flex-grow bg-[#262626] overflow-hidden">
-                                <p class="text-gray-400 text-sm line-clamp-3 mb-4">${esc(snip.description || "No description provided.")}</p>
-                                <button onclick="openViewModal(${snip.id})" class="ore-btn w-full py-2 text-sm text-center border-dashed">
-                                    <i class="fas fa-expand"></i> View Full Snippet
-                                </button>
+                            <div class="p-4 flex-grow bg-[#262626] overflow-hidden flex flex-col">
+                                <p class="text-gray-400 text-sm line-clamp-2 mb-3 h-10">${esc(snip.description || "No description provided.")}</p>
+                                <div onclick="openViewModal(${snip.id})" class="code-preview-box group flex-grow relative">
+                                    ${esc(snip.code)}
+                                    <div class="code-fade-overlay"></div>
+                                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black bg-opacity-60 transition font-bold text-white tracking-widest uppercase backdrop-blur-sm">
+                                        <i class="fas fa-expand mr-2"></i> Expand
+                                    </div>
+                                </div>
                             </div>
                             <div class="p-2 border-t-2 border-[#1e1e1e] bg-[#2b2b2b] flex justify-between items-center text-xs text-gray-500">
                                 <span>By <span class="text-gray-300">${esc(snip.author)}</span></span>
