@@ -8,7 +8,6 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
-
         :root { --bg-base: #1e1e1e; --bg-panel: #2b2b2b; --border-light: #3c3c3c; --border-dark: #161616; --mc-green: #3c8527; --mc-green-hover: #2a641c; --text-main: #e0e0e0; }
         body { background-color: var(--bg-base); color: var(--text-main); font-family: 'Inter', sans-serif; overflow-x: hidden; }
         .ore-panel { background-color: #3b3b3b; border: 2px solid; border-color: #5b5b5b #1e1e1e #1e1e1e #5b5b5b; box-shadow: inset 0 0 0 2px #2b2b2b; }
@@ -34,11 +33,10 @@
             <h1 class="text-2xl font-bold mb-1 text-white uppercase tracking-wider">Leo's Studio</h1>
             <p class="text-sm text-gray-400 mb-6">Bedrock Scripting Snippets</p>
             <div class="space-y-4">
-                <input type="text" id="usernameInput" placeholder="Username" class="ore-input w-full p-3">
+                <input type="text" id="usernameInput" placeholder="Username" class="ore-input w-full p-3" onkeyup="checkAdminUser()">
                 <input type="password" id="passwordInput" placeholder="Password" class="ore-input w-full p-3">
                 <div class="flex gap-2 pt-2">
-                    <button onclick="handleAuth('login')" class="ore-btn ore-btn-green w-full py-2 font-bold">Login</button>
-                    <button onclick="handleAuth('signup')" class="ore-btn w-full py-2 font-bold">Sign Up</button>
+                    <button onclick="handleAuth()" class="ore-btn ore-btn-green w-full py-2 font-bold">Login / Sign Up</button>
                 </div>
             </div>
             <p id="authError" class="text-red-400 text-xs mt-4 h-4"></p>
@@ -55,7 +53,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <div id="adminBadge" class="hidden px-3 py-1 bg-red-900 border border-red-500 text-red-200 text-xs font-bold uppercase rounded-sm">Admin Access</div>
+                <div id="adminBadge" class="hidden px-3 py-1 bg-red-900 border border-red-500 text-red-200 text-xs font-bold uppercase rounded-sm">Admin Mode</div>
                 <div class="flex items-center gap-3 bg-[#1e1e1e] px-4 py-1.5 border border-[#3c3c3c]">
                     <i class="fas fa-user text-gray-400"></i>
                     <span id="displayUsername" class="font-mono text-sm text-white">Guest</span>
@@ -71,9 +69,14 @@
                 <input type="text" id="searchInput" onkeyup="filterSnippets()" placeholder="Search snippets..." class="ore-input w-full p-4 pl-12 text-lg shadow-inner">
                 <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
             </div>
-            <button onclick="openUploadModal()" class="ore-btn ore-btn-green px-6 flex items-center gap-2 font-bold shadow-md whitespace-nowrap">
-                <i class="fas fa-plus"></i> NEW SNIPPET
-            </button>
+            <div class="flex gap-2">
+                <button id="adminImportBtn" onclick="openAdminModal()" class="hidden ore-btn bg-red-900 border-red-800 text-red-100 px-6 flex items-center gap-2 font-bold shadow-md whitespace-nowrap">
+                    <i class="fas fa-file-import"></i> IMPORT
+                </button>
+                <button onclick="openUploadModal()" class="ore-btn ore-btn-green px-6 flex items-center gap-2 font-bold shadow-md whitespace-nowrap">
+                    <i class="fas fa-plus"></i> NEW SNIPPET
+                </button>
+            </div>
         </div>
 
         <div id="loadingState" class="hidden flex flex-col items-center justify-center py-12">
@@ -93,7 +96,7 @@
     <div id="uploadModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm hidden">
         <div class="ore-panel w-full max-w-2xl p-0 shadow-2xl flex flex-col max-h-[90vh]">
             <div class="p-4 border-b-2 border-[#1e1e1e] flex justify-between items-center bg-[#333]">
-                <h3 class="font-bold text-white">Create New Snippet</h3>
+                <h3 class="font-bold text-white">Submit Snippet</h3>
                 <button onclick="closeUploadModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-6 overflow-y-auto space-y-4">
@@ -125,27 +128,48 @@
             </div>
             <div class="p-4 border-t-2 border-[#1e1e1e] bg-[#2b2b2b] flex justify-end gap-3">
                 <button onclick="closeUploadModal()" class="ore-btn px-6 py-2">Cancel</button>
-                <button onclick="submitSnippet()" class="ore-btn ore-btn-green px-6 py-2 font-bold">Upload Snippet</button>
+                <button onclick="submitSnippet()" class="ore-btn ore-btn-green px-6 py-2 font-bold">Submit for Review</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm hidden">
+        <div class="ore-panel w-full max-w-2xl p-0 shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b-2 border-[#1e1e1e] flex justify-between items-center bg-[#8f2121]">
+                <h3 class="font-bold text-white">Admin Import (From Discord)</h3>
+                <button onclick="closeAdminModal()" class="text-white hover:text-gray-300"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <p class="text-xs text-gray-400 mb-2">Paste the raw JSON snippet from Discord below to approve and publish it to the live site.</p>
+                <textarea id="adminJsonPaste" rows="12" class="ore-input w-full p-3 font-mono text-xs" placeholder='{"id": 123, "title": "...", "code": "..."}'></textarea>
+            </div>
+            <div class="p-4 border-t-2 border-[#1e1e1e] bg-[#2b2b2b] flex justify-end gap-3">
+                <button onclick="closeAdminModal()" class="ore-btn px-6 py-2">Cancel</button>
+                <button onclick="adminPublishSnippet()" class="ore-btn ore-btn-green px-6 py-2 font-bold">Approve & Publish</button>
             </div>
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // CONFIGURATION (PASTE JSONBIN KEYS HERE)
-        // ==========================================
-        const BIN_ID = "694989f6ae596e708faad01d";       // e.g. 6585e...
-        const API_KEY = "$2a$10$S5upbY74rQftmiUR.7WOgOrHVjaCAIoQdBYybmL5lVHIHE9zWsCNm";  // e.g. $2a$10...
-        // ==========================================
-
+        const BIN_ID = "69498d37d0ea881f403a2e86";
+        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1452731590722584747/prfXvFd2Rh4ovyVYLGs9SHSbAYVkBkc-kUnrB04zOcx2XqvDvisrS1oEzJzxip-Kw_IC";
+        
+        // Admin Config
+        const ADMIN_USERNAME = "ExterLeo";
+        
         let currentUser = null;
-        const ADMIN_USER = "ExterLeo";
+        let adminKey = null; // Stored in memory/localstorage for session
         let localSnippets = [];
 
         document.addEventListener('DOMContentLoaded', () => {
             const savedUser = localStorage.getItem('ls_user');
             if (savedUser) {
                 currentUser = savedUser;
+                // Check if admin session
+                if (currentUser === ADMIN_USERNAME) {
+                    const savedKey = localStorage.getItem('ls_admin_key');
+                    if (savedKey) adminKey = savedKey;
+                }
                 document.getElementById('loginOverlay').classList.add('hidden');
                 initApp();
             } else {
@@ -153,24 +177,44 @@
             }
         });
 
-        function handleAuth(type) {
+        function checkAdminUser() {
+            const input = document.getElementById('usernameInput');
+            const passInput = document.getElementById('passwordInput');
+            if (input.value === ADMIN_USERNAME) {
+                passInput.placeholder = "Enter API Master Key";
+            } else {
+                passInput.placeholder = "Password";
+            }
+        }
+
+        function handleAuth() {
             const userIn = document.getElementById('usernameInput').value.trim();
             const passIn = document.getElementById('passwordInput').value.trim();
             const errBox = document.getElementById('authError');
 
-            if (!userIn || !passIn) { errBox.textContent = "Please enter username and password."; return; }
+            if (!userIn || !passIn) { errBox.textContent = "Please enter credentials."; return; }
 
-            if (type === 'signup') {
-                if (localStorage.getItem(`user_${userIn}`)) { errBox.textContent = "User already exists."; return; }
+            // Admin Login Flow
+            if (userIn === ADMIN_USERNAME) {
+                // We treat the "password" as the API Key for the Admin
+                // Simple validation: Key usually starts with $2a$ or similar, or just trust length
+                if (passIn.length < 10) { errBox.textContent = "Invalid Admin Key format."; return; }
+                
+                adminKey = passIn;
+                localStorage.setItem('ls_admin_key', adminKey);
+                loginSuccess(userIn);
+                return;
+            }
+
+            // Regular User Flow (Local Storage Auth)
+            const storedPass = localStorage.getItem(`user_${userIn}`);
+            if (storedPass) {
+                if (storedPass === passIn) loginSuccess(userIn);
+                else errBox.textContent = "Incorrect password.";
+            } else {
+                // New User (Sign Up)
                 localStorage.setItem(`user_${userIn}`, passIn);
                 loginSuccess(userIn);
-            } else {
-                const storedPass = localStorage.getItem(`user_${userIn}`);
-                if (storedPass === passIn || (userIn === ADMIN_USER && !storedPass)) {
-                    loginSuccess(userIn);
-                } else {
-                    errBox.textContent = "Invalid credentials.";
-                }
             }
         }
 
@@ -181,15 +225,20 @@
             initApp();
         }
 
-        function logout() { localStorage.removeItem('ls_user'); location.reload(); }
+        function logout() {
+            localStorage.removeItem('ls_user');
+            localStorage.removeItem('ls_admin_key'); // Clear admin key on logout
+            location.reload();
+        }
 
         function initApp() {
             document.getElementById('displayUsername').textContent = currentUser;
-            if (currentUser === ADMIN_USER) { document.getElementById('adminBadge').classList.remove('hidden'); }
+            if (currentUser === ADMIN_USERNAME && adminKey) {
+                document.getElementById('adminBadge').classList.remove('hidden');
+                document.getElementById('adminImportBtn').classList.remove('hidden');
+            }
             fetchSnippets();
         }
-
-        // --- CLOUD FUNCTIONS ---
 
         async function fetchSnippets() {
             const grid = document.getElementById('snippetGrid');
@@ -198,45 +247,23 @@
             loader.classList.remove('hidden');
             
             try {
-                // Fetch from JSONBin
-                const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-                    headers: { 'X-Master-Key': API_KEY }
-                });
-                
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`);
                 if(!response.ok) throw new Error("API Error");
-                
                 const data = await response.json();
-                // JSONBin wraps data in a 'record' object
                 localSnippets = Array.isArray(data.record) ? data.record : [];
                 renderSnippets();
             } catch (err) {
-                console.error(err);
-                grid.innerHTML = `<p class="text-red-500 text-center col-span-3">Database Connection Failed.<br>Check BIN_ID and API_KEY in code.</p>`;
+                grid.innerHTML = `<p class="text-red-500 text-center col-span-3">Connection Failed. Ensure Bin is PUBLIC.</p>`;
             } finally {
                 loader.classList.add('hidden');
             }
         }
-
-        async function saveToCloud(newData) {
-            // Overwrite the bin with new data
-            await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                method: 'PUT',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': API_KEY
-                },
-                body: JSON.stringify(newData)
-            });
-        }
-
-        // --- UI FUNCTIONS ---
 
         function renderSnippets(searchTerm = '') {
             const grid = document.getElementById('snippetGrid');
             grid.innerHTML = '';
             const filtered = localSnippets.filter(s => 
                 s.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                s.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 s.code.toLowerCase().includes(searchTerm.toLowerCase())
             );
             
@@ -245,7 +272,7 @@
             } else {
                 document.getElementById('emptyState').classList.add('hidden');
                 filtered.forEach(snip => {
-                    const isAdmin = currentUser === ADMIN_USER;
+                    const isAdmin = (currentUser === ADMIN_USERNAME && adminKey);
                     const card = document.createElement('div');
                     card.className = 'ore-panel flex flex-col h-full transition hover:-translate-y-1';
                     card.innerHTML = `
@@ -257,7 +284,7 @@
                                     <span class="text-xs bg-[#1e1e1e] px-2 py-0.5 text-yellow-600 border border-[#3c3c3c]">${esc(snip.version)}</span>
                                 </div>
                             </div>
-                            ${isAdmin ? `<button onclick="deleteSnippet(${snip.id})" class="text-red-500 hover:text-red-400 p-1"><i class="fas fa-trash"></i></button>` : ''}
+                            ${isAdmin ? `<button onclick="adminDeleteSnippet(${snip.id})" class="text-red-500 hover:text-red-400 p-1"><i class="fas fa-trash"></i></button>` : ''}
                         </div>
                         <div class="p-0 flex-grow relative group">
                             <textarea readonly class="w-full h-40 bg-[#161616] text-[#a0a0a0] p-4 font-mono text-sm resize-none focus:outline-none border-none">${esc(snip.code)}</textarea>
@@ -283,48 +310,79 @@
 
             if (!title || !code) { alert("Title and Code are required!"); return; }
 
-            const newSnippet = {
+            const snippetData = {
                 id: Date.now(),
                 title, category, version: version || "Unknown", code,
                 author: currentUser,
                 date: new Date().toLocaleDateString()
             };
 
-            // Optimistic UI update (show immediately)
-            localSnippets.unshift(newSnippet);
-            renderSnippets(document.getElementById('searchInput').value);
-            closeUploadModal();
+            const payload = {
+                content: "**New Snippet for Review**",
+                embeds: [{
+                    title: "Submission by " + currentUser,
+                    description: "Copy the JSON below and paste into Admin Import.",
+                    color: 3966247,
+                    fields: [{ name: "Raw JSON", value: "```json\n" + JSON.stringify(snippetData) + "\n```" }]
+                }]
+            };
 
-            // Save to Cloud in background
             try {
-                await saveToCloud(localSnippets);
+                await fetch(DISCORD_WEBHOOK_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                alert("Snippet submitted to Admin for review!");
+                closeUploadModal();
             } catch (err) {
-                alert("Error saving to cloud. Changes may be lost on refresh.");
+                alert("Error connecting to Discord.");
             }
         }
 
-        async function deleteSnippet(id) {
-            if (!confirm("Delete this snippet?")) return;
-            
-            // Optimistic Delete
-            localSnippets = localSnippets.filter(s => s.id !== id);
-            renderSnippets(document.getElementById('searchInput').value);
-
-            // Sync
+        async function adminPublishSnippet() {
+            if (!adminKey) return;
             try {
-                await saveToCloud(localSnippets);
-            } catch (err) {
-                alert("Error syncing deletion to cloud.");
+                const raw = document.getElementById('adminJsonPaste').value;
+                const newSnip = JSON.parse(raw);
+                
+                // Add to local list and push to cloud
+                localSnippets.unshift(newSnip);
+                
+                await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': adminKey
+                    },
+                    body: JSON.stringify(localSnippets)
+                });
+                
+                alert("Snippet Published Successfully!");
+                closeAdminModal();
+                renderSnippets();
+            } catch (e) {
+                alert("Invalid JSON or Wrong Key.");
             }
+        }
+        
+        async function adminDeleteSnippet(id) {
+            if (!confirm("Confirm Delete?") || !adminKey) return;
+            localSnippets = localSnippets.filter(s => s.id !== id);
+            try {
+                 await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-Master-Key': adminKey },
+                    body: JSON.stringify(localSnippets)
+                });
+                renderSnippets();
+            } catch(e) { alert("Delete failed."); }
         }
 
         function openUploadModal() { document.getElementById('uploadModal').classList.remove('hidden'); }
-        function closeUploadModal() { 
-            document.getElementById('uploadModal').classList.add('hidden');
-            document.getElementById('snipTitle').value = '';
-            document.getElementById('snipCode').value = '';
-            document.getElementById('snipVersion').value = '';
-        }
+        function closeUploadModal() { document.getElementById('uploadModal').classList.add('hidden'); }
+        function openAdminModal() { document.getElementById('adminModal').classList.remove('hidden'); }
+        function closeAdminModal() { document.getElementById('adminModal').classList.add('hidden'); }
         function filterSnippets() { renderSnippets(document.getElementById('searchInput').value); }
         function copyToClipboard(btn) {
             const textarea = btn.parentElement.querySelector('textarea');
@@ -335,9 +393,7 @@
             btn.classList.add('text-green-400');
             setTimeout(() => { btn.innerHTML = originalHTML; btn.classList.remove('text-green-400'); }, 2000);
         }
-        function esc(unsafe) {
-            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        }
+        function esc(unsafe) { return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
     </script>
 </body>
 </html>
