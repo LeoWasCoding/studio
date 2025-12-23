@@ -16,7 +16,7 @@
         .ore-panel.featured-gold { border-color: #fbbf24 #78350f #78350f #fbbf24; box-shadow: inset 0 0 0 2px #451a03, 0 0 15px rgba(251, 191, 36, 0.1); }
         .ore-input { background-color: #1e1e1e; border: 2px solid; border-color: #161616 #5b5b5b #5b5b5b #161616; color: white; outline: none; }
         .ore-input:focus { border-color: #5b5b5b #a0a0a0 #a0a0a0 #5b5b5b; }
-        .ore-btn { background-color: #3b3b3b; border: 2px solid; border-color: #5b5b5b #1e1e1e #1e1e1e #5b5b5b; color: #e0e0e0; cursor: pointer; text-shadow: 1px 1px 0 #1e1e1e; display: inline-flex; justify-content: center; align-items: center; }
+        .ore-btn { background-color: #3b3b3b; border: 2px solid; border-color: #5b5b5b #1e1e1e #1e1e1e #5b5b5b; color: #e0e0e0; cursor: pointer; text-shadow: 1px 1px 0 #1e1e1e; display: inline-flex; justify-content: center; align-items: center; transition: all 0.1s; }
         .ore-btn:hover { background-color: #4a4a4a; color: #ffffff; }
         .ore-btn:active { border-color: #1e1e1e #5b5b5b #5b5b5b #1e1e1e; background-color: #2b2b2b; transform: translateY(1px); }
         .ore-btn-green { background-color: var(--mc-green); border-color: #5cb345 #1e4513 #1e4513 #5cb345; }
@@ -30,45 +30,37 @@
         .hidden { display: none !important; }
         .loading-spinner { border: 4px solid #3c3c3c; border-top: 4px solid #3c8527; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .text-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; word-break: break-all; }
+        .text-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .code-preview-box { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; line-height: 1.4; color: #a0a0a0; background-color: #161616; border: 2px solid #1e1e1e; padding: 0.75rem; overflow: hidden; white-space: pre-wrap; word-break: break-all; max-height: 140px; position: relative; cursor: pointer; transition: border-color 0.2s; }
         .code-preview-box:hover { border-color: #5b5b5b; }
         .code-fade-overlay { position: absolute; bottom: 0; left: 0; right: 0; height: 40px; background: linear-gradient(to bottom, transparent, #262626); pointer-events: none; z-index: 10; }
         .expand-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background-color: rgba(0,0,0,0.7); backdrop-filter: blur(2px); opacity: 0; transition: opacity 0.2s ease; z-index: 20; }
         .group:hover .expand-overlay { opacity: 1; }
+        .modal-enter { animation: modalFadeIn 0.2s ease-out forwards; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
-<head>
-    <link rel="icon" type="image/png" href="https://cdn.discordapp.com/icons/1425897963238068256/4eb9f7204f727d831c9b7080fcdf2bb7.webp?size=56">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://leowascoding.github.io/studio/snippet/index.html">
-    <meta property="og:title" content="Leo's Studio | Bedrock Snippets">
-    <meta property="og:description" content="A curated collection of Minecraft Bedrock snippets, Entity behaviors, and Molang examples.">
-    <meta property="og:image" content="https://i.ibb.co/WvG3j1rD/Gemini-Generated-Image-wk9v7lwk9v7lwk9v-1.png">
-
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://leowascoding.github.io/studio/snippet/index.html">
-    <meta property="twitter:title" content="Leo's Studio | Bedrock Snippets">
-    <meta property="twitter:description" content="A curated collection of Minecraft Bedrock snippets, Entity behaviors, and Molang examples.">
-    <meta property="twitter:image" content="https://i.ibb.co/WvG3j1rD/Gemini-Generated-Image-wk9v7lwk9v7lwk9v-1.png">
-</head>
 <body class="min-h-screen flex flex-col">
-
     <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 backdrop-blur-sm">
-        <div class="ore-panel p-8 w-96 text-center shadow-2xl">
+        <div class="ore-panel p-8 w-96 text-center shadow-2xl relative modal-enter">
             <h1 class="text-2xl font-bold mb-1 text-white uppercase tracking-wider">Leo's Studio</h1>
             <p class="text-sm text-gray-400 mb-6">Bedrock snippets</p>
-            <div class="space-y-4">
-                <input type="text" id="usernameInput" placeholder="Username" class="ore-input w-full p-3" onkeyup="checkAdminUser()">
+            <div id="loginForm" class="space-y-4">
+                <input type="text" id="usernameInput" placeholder="Username" class="ore-input w-full p-3">
                 <input type="password" id="passwordInput" placeholder="Password" class="ore-input w-full p-3">
                 <div class="flex gap-2 pt-2">
-                    <button onclick="handleAuth()" class="ore-btn ore-btn-green w-full py-2 font-bold">Login / Sign Up</button>
+                    <button onclick="_0x5e2()" id="loginBtn" class="ore-btn ore-btn-green w-full py-2 font-bold">Login / Sign Up</button>
                 </div>
+                <p class="text-xs text-gray-500 mt-2">If account doesn't exist, it will be created.</p>
+            </div>
+            <div id="loginLoader" class="hidden flex-col items-center py-4">
+                <div class="loading-spinner w-8 h-8 border-2 mb-2"></div>
+                <p class="text-xs text-gray-400">Verifying credentials...</p>
             </div>
             <p id="authError" class="text-red-400 text-xs mt-4 h-4"></p>
         </div>
     </div>
-
     <header class="bg-[#2b2b2b] border-b-2 border-[#161616] sticky top-0 z-40 shadow-lg">
         <div class="container mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-4">
@@ -79,64 +71,74 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <div id="adminBadge" class="hidden px-3 py-1 bg-red-900 border border-red-500 text-red-200 text-xs font-bold uppercase rounded-sm">Admin Mode</div>
+                <div id="adminBadge" class="hidden px-3 py-1 bg-red-900 border border-red-500 text-red-200 text-xs font-bold uppercase rounded-sm">Admin</div>
                 <div class="flex items-center gap-3 bg-[#1e1e1e] px-4 py-1.5 border border-[#3c3c3c]">
                     <i class="fas fa-user text-gray-400"></i>
                     <span id="displayUsername" class="font-mono text-sm text-white">Guest</span>
                 </div>
-                <button onclick="logout()" class="ore-btn px-3 py-1 text-xs">LOGOUT</button>
+                <button onclick="_0x9a1()" class="ore-btn px-3 py-1 text-xs">LOGOUT</button>
             </div>
         </div>
     </header>
-
     <main class="flex-grow container mx-auto px-4 py-8">
         <div class="flex flex-col md:flex-row gap-4 mb-4">
             <div class="flex-grow relative">
-                <input type="text" id="searchInput" onkeyup="filterSnippets()" placeholder="Search snippets..." class="ore-input w-full p-4 pl-12 text-lg shadow-inner">
+                <input type="text" id="searchInput" onkeyup="_0x7c4()" placeholder="Search snippets..." class="ore-input w-full p-4 pl-12 text-lg shadow-inner">
                 <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
             </div>
             <div class="flex gap-2 flex-wrap sm:flex-nowrap">
-                <button id="adminImportBtn" onclick="openAdminModal()" class="hidden ore-btn bg-red-900 border-red-800 text-red-100 px-6 flex items-center gap-2 font-bold shadow-md whitespace-nowrap">
+                <button id="adminImportBtn" onclick="_0x8d3()" class="hidden ore-btn bg-red-900 border-red-800 text-red-100 px-6 flex items-center gap-2 font-bold shadow-md whitespace-nowrap">
                     <i class="fas fa-file-import"></i> IMPORT
                 </button>
                 <a href="https://discord.gg/4R8jrRsXZb" target="_blank" class="ore-btn ore-btn-discord px-6 flex items-center gap-2 font-bold shadow-md whitespace-nowrap text-decoration-none">
                     <i class="fab fa-discord"></i> JOIN DISCORD
                 </a>
-                <button onclick="openUploadModal()" class="ore-btn ore-btn-green px-6 flex items-center gap-2 font-bold shadow-md whitespace-nowrap">
+                <button onclick="_0x6f5()" class="ore-btn ore-btn-green px-6 flex items-center gap-2 font-bold shadow-md whitespace-nowrap">
                     <i class="fas fa-plus"></i> NEW SNIPPET
                 </button>
             </div>
         </div>
-
         <div class="flex gap-2 mb-8 overflow-x-auto pb-2" id="categoryBar">
-            <button onclick="setCategory('All')" class="ore-btn cat-btn active px-4 py-1 text-sm rounded-full">All</button>
-            <button onclick="setCategory('Entity Behavior')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full">Entity Behavior</button>
-            <button onclick="setCategory('Script API')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full">Script API</button>
-            <button onclick="setCategory('Molang')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full">Molang</button>
-            <button onclick="setCategory('Items')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full">Items</button>
-            <button onclick="setCategory('Recipes')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full">Recipes</button>
-            <button onclick="setCategory('UI/Forms')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full">UI/Forms</button>
+            <button onclick="_0x3e1('All')" class="ore-btn cat-btn active px-4 py-1 text-sm rounded-full whitespace-nowrap">All</button>
+            <button onclick="_0x3e1('Entity Behavior')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full whitespace-nowrap">Entity Behavior</button>
+            <button onclick="_0x3e1('Script API')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full whitespace-nowrap">Script API</button>
+            <button onclick="_0x3e1('Molang')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full whitespace-nowrap">Molang</button>
+            <button onclick="_0x3e1('Items')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full whitespace-nowrap">Items</button>
+            <button onclick="_0x3e1('Blocks')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full whitespace-nowrap">Blocks</button>
+            <button onclick="_0x3e1('Recipes')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full whitespace-nowrap">Recipes</button>
+            <button onclick="_0x3e1('UI/Forms')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full whitespace-nowrap">UI/Forms</button>
+            <button onclick="_0x3e1('Commands')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full whitespace-nowrap">Commands</button>
+            <button onclick="_0x3e1('JSON UI')" class="ore-btn cat-btn px-4 py-1 text-sm rounded-full whitespace-nowrap">JSON UI</button>
         </div>
-
         <div id="loadingState" class="hidden flex flex-col items-center justify-center py-12">
             <div class="loading-spinner mb-4"></div>
             <p class="text-gray-400">Syncing with cloud database...</p>
         </div>
-
         <div id="snippetGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-
         <div id="emptyState" class="hidden text-center py-20 opacity-50">
             <i class="fas fa-box-open text-6xl mb-4 text-gray-600"></i>
             <h2 class="text-xl font-bold">No snippets found</h2>
             <p>Try a different category or search term.</p>
         </div>
     </main>
-
+    <div id="alertModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm hidden">
+        <div class="ore-panel w-96 p-0 shadow-2xl flex flex-col modal-enter">
+            <div class="p-3 border-b-2 border-[#1e1e1e] bg-[#2b2b2b] flex justify-between items-center">
+                <h3 id="alertTitle" class="font-bold text-white text-sm">System Message</h3>
+                <button onclick="_0x2b9()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 text-center">
+                <p id="alertMessage" class="text-gray-300 text-sm mb-6">Message goes here...</p>
+                <div class="flex justify-center gap-2" id="alertActions">
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="uploadModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm hidden">
-        <div class="ore-panel w-full max-w-2xl p-0 shadow-2xl flex flex-col max-h-[90vh]">
-            <div class="p-4 border-b-2 border-[#1e1e1e] flex justify-between items-center bg-[#333]">
-                <h3 class="font-bold text-white">Submit Snippet</h3>
-                <button onclick="closeUploadModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+        <div class="ore-panel w-full max-w-2xl p-0 shadow-2xl flex flex-col max-h-[90vh] modal-enter">
+            <div class="p-3 border-b-2 border-[#1e1e1e] bg-[#2b2b2b] flex justify-between items-center">
+                <h3 class="font-bold text-white pl-2">Submit Snippet</h3>
+                <button onclick="_0x4a7()" class="ore-btn w-8 h-8 text-red-400 hover:text-red-200"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-6 overflow-y-auto space-y-4">
                 <div>
@@ -155,8 +157,11 @@
                             <option value="Script API">Script API (JS)</option>
                             <option value="Molang">Molang</option>
                             <option value="Items">Items</option>
+                            <option value="Blocks">Blocks</option>
                             <option value="Recipes">Recipes</option>
                             <option value="UI/Forms">UI/Forms</option>
+                            <option value="Commands">Commands</option>
+                            <option value="JSON UI">JSON UI</option>
                         </select>
                     </div>
                     <div>
@@ -166,21 +171,24 @@
                 </div>
                 <div>
                     <label class="block text-xs uppercase text-gray-400 mb-1">Code (JSON or JS)</label>
-                    <textarea id="snipCode" rows="8" class="ore-input w-full p-3 font-mono text-sm leading-relaxed" placeholder='{ "format_version": "1.20.50", ... }'></textarea>
+                    <textarea id="snipCode" rows="6" class="ore-input w-full p-3 font-mono text-sm leading-relaxed" placeholder='{ "format_version": "1.20.50", ... }'></textarea>
+                </div>
+                <div class="bg-[#2b2b2b] p-3 border border-[#3c3c3c]">
+                    <label class="block text-xs uppercase text-green-500 font-bold mb-1" id="captchaLabel">Security Check</label>
+                    <input type="number" id="captchaInput" class="ore-input w-full p-2" placeholder="Enter the result...">
                 </div>
             </div>
             <div class="p-4 border-t-2 border-[#1e1e1e] bg-[#2b2b2b] flex justify-end gap-3">
-                <button onclick="closeUploadModal()" class="ore-btn px-6 py-2">Cancel</button>
-                <button onclick="submitSnippet()" class="ore-btn ore-btn-green px-6 py-2 font-bold">Submit for Review</button>
+                <button onclick="_0x4a7()" class="ore-btn px-6 py-2">Cancel</button>
+                <button onclick="_0x5c8()" class="ore-btn ore-btn-green px-6 py-2 font-bold">Submit for Review</button>
             </div>
         </div>
     </div>
-
     <div id="viewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 backdrop-blur-sm hidden">
-        <div class="ore-panel w-full max-w-4xl p-0 shadow-2xl flex flex-col h-[85vh]">
-            <div class="p-4 border-b-2 border-[#1e1e1e] flex justify-between items-center bg-[#333]">
-                <h3 id="viewTitle" class="font-bold text-white text-xl">Snippet Title</h3>
-                <button onclick="closeViewModal()" class="text-gray-400 hover:text-white text-xl"><i class="fas fa-times"></i></button>
+        <div class="ore-panel w-full max-w-4xl p-0 shadow-2xl flex flex-col h-[85vh] modal-enter">
+            <div class="p-3 border-b-2 border-[#1e1e1e] bg-[#2b2b2b] flex justify-between items-center">
+                <h3 id="viewTitle" class="font-bold text-white text-xl truncate pr-4 pl-2">Snippet Title</h3>
+                <button onclick="_0x1d9()" class="ore-btn w-8 h-8 text-red-400 hover:text-red-200"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-6 overflow-y-auto flex-grow bg-[#222]">
                 <div class="flex gap-2 mb-4">
@@ -193,216 +201,271 @@
                 </div>
                 <div class="relative group">
                     <textarea id="viewCode" readonly class="w-full h-[400px] bg-[#161616] text-[#a0a0a0] p-4 font-mono text-sm resize-none focus:outline-none border-2 border-[#1e1e1e] rounded"></textarea>
-                    <button onclick="copyToClipboard(this)" class="absolute top-4 right-4 ore-btn text-xs py-1 px-3">
+                    <button onclick="_0x0f2(this)" class="absolute top-4 right-4 ore-btn text-xs py-1 px-3">
                         <i class="fas fa-copy"></i> Copy
                     </button>
                 </div>
             </div>
         </div>
     </div>
-
     <div id="adminModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm hidden">
-        <div class="ore-panel w-full max-w-2xl p-0 shadow-2xl flex flex-col max-h-[90vh]">
-            <div class="p-4 border-b-2 border-[#1e1e1e] flex justify-between items-center bg-[#8f2121]">
-                <h3 class="font-bold text-white">Admin Import</h3>
-                <button onclick="closeAdminModal()" class="text-white hover:text-gray-300"><i class="fas fa-times"></i></button>
+        <div class="ore-panel w-full max-w-2xl p-0 shadow-2xl flex flex-col max-h-[90vh] modal-enter">
+            <div class="p-3 border-b-2 border-[#1e1e1e] bg-[#8f2121] flex justify-between items-center">
+                <h3 class="font-bold text-white pl-2">Admin Import</h3>
+                <button onclick="_0x9c4()" class="ore-btn w-8 h-8 text-white hover:text-gray-200"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-6">
                 <p class="text-xs text-gray-400 mb-2">Paste raw JSON from Discord.</p>
                 <textarea id="adminJsonPaste" rows="12" class="ore-input w-full p-3 font-mono text-xs" placeholder='{"id": ...}'></textarea>
             </div>
             <div class="p-4 border-t-2 border-[#1e1e1e] bg-[#2b2b2b] flex justify-end gap-3">
-                <button onclick="closeAdminModal()" class="ore-btn px-6 py-2">Cancel</button>
-                <button onclick="adminPublishSnippet()" class="ore-btn ore-btn-green px-6 py-2 font-bold">Publish</button>
+                <button onclick="_0x9c4()" class="ore-btn px-6 py-2">Cancel</button>
+                <button onclick="_0x7b6()" class="ore-btn ore-btn-green px-6 py-2 font-bold">Publish</button>
             </div>
         </div>
     </div>
-
     <script>
-        const BIN_ID = "69498d37d0ea881f403a2e86";
-        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1452731590722584747/prfXvFd2Rh4ovyVYLGs9SHSbAYVkBkc-kUnrB04zOcx2XqvDvisrS1oEzJzxip-Kw_IC";
-        const ADMIN_USERNAME = "ExterLeo";
+        const _k1 = ["6", "9", "4", "9", "8", "d", "3", "7", "d", "0", "e", "a", "8", "8", "1", "f", "4", "0", "3", "a", "2", "e", "8", "6"];
+        const _k2 = ["$", "2", "a", "$", "1", "0", "$", "S", "5", "u", "p", "b", "Y", "7", "4", "r", "Q", "f", "t", "m", "i", "U", "R", ".", "7", "W", "O", "g", "O", "r", "H", "V", "j", "a", "C", "A", "I", "o", "Q", "d", "B", "Y", "y", "b", "m", "L", "5", "l", "V", "H", "I", "H", "E", "9", "z", "W", "s", "C", "N", "m"];
+        const _k3 = ["h", "t", "t", "p", "s", ":", "/", "/", "d", "i", "s", "c", "o", "r", "d", ".", "c", "o", "m", "/", "a", "p", "i", "/", "w", "e", "b", "h", "o", "o", "k", "s", "/", "1", "4", "5", "2", "7", "3", "1", "5", "9", "0", "7", "2", "2", "5", "8", "4", "7", "4", "7", "/", "p", "r", "f", "X", "v", "F", "d", "2", "R", "h", "4", "o", "v", "y", "V", "Y", "L", "G", "s", "9", "S", "H", "S", "b", "A", "Y", "V", "k", "B", "k", "c", "-", "k", "U", "n", "r", "B", "0", "4", "z", "O", "c", "x", "2", "X", "q", "v", "D", "v", "i", "s", "r", "S", "1", "o", "E", "z", "J", "z", "x", "i", "p", "-", "K", "w", "_", "I", "C"];
+        const _k4 = "ExterLeo";
         
-        let currentUser = null;
-        let adminKey = null;
-        let localSnippets = [];
-        let currentCategory = 'All';
-        let userVotes = {};
+        const _x_bin = _k1.join('');
+        const _x_mas = _k2.join('');
+        const _x_dis = _k3.join('');
+        const _x_adm = _k4;
+        
+        let _u = null;
+        let _d = { users: [], snippets: [] }; 
+        let _c = 'All';
+        let _v = {};
+        let _z = 0; 
 
         document.addEventListener('DOMContentLoaded', () => {
-            const savedUser = localStorage.getItem('ls_user');
-            if (savedUser) {
-                currentUser = savedUser;
-                const savedVotes = localStorage.getItem('ls_user_votes');
-                if(savedVotes) userVotes = JSON.parse(savedVotes);
-
-                if (currentUser === ADMIN_USERNAME) {
-                    const savedKey = localStorage.getItem('ls_admin_key');
-                    if (savedKey) adminKey = savedKey;
-                }
+            const _ls = localStorage.getItem('ls_user');
+            if (_ls) {
+                _u = _ls;
+                const _lv = localStorage.getItem('ls_user_votes');
+                if(_lv) _v = JSON.parse(_lv);
                 document.getElementById('loginOverlay').classList.add('hidden');
-                initApp();
-            } else {
-                document.getElementById('loginOverlay').classList.remove('hidden');
+                _0x1a4(true); 
             }
         });
 
-        function checkAdminUser() {
-            const input = document.getElementById('usernameInput');
-            const passInput = document.getElementById('passwordInput');
-            if (input.value === ADMIN_USERNAME) {
-                passInput.placeholder = "Enter API Master Key";
-            } else {
-                passInput.placeholder = "Password";
+        function _0x3b2(m, t = "System Message") {
+            document.getElementById('alertTitle').innerText = t;
+            document.getElementById('alertMessage').innerText = m;
+            const a = document.getElementById('alertActions');
+            a.innerHTML = `<button onclick="_0x2b9()" class="ore-btn px-6 py-2">OK</button>`;
+            document.getElementById('alertModal').classList.remove('hidden');
+        }
+
+        function _0x8c1(m, c) {
+            document.getElementById('alertTitle').innerText = "Confirmation";
+            document.getElementById('alertMessage').innerText = m;
+            const a = document.getElementById('alertActions');
+            a.innerHTML = ``; 
+            const b1 = document.createElement('button');
+            b1.className = "ore-btn px-4 py-2 mr-2";
+            b1.innerText = "Cancel";
+            b1.onclick = _0x2b9;
+            const b2 = document.createElement('button');
+            b2.className = "ore-btn ore-btn-green px-4 py-2 font-bold";
+            b2.innerText = "Confirm";
+            b2.onclick = () => { _0x2b9(); c(); };
+            a.appendChild(b1);
+            a.appendChild(b2);
+            document.getElementById('alertModal').classList.remove('hidden');
+        }
+
+        function _0x2b9() {
+            document.getElementById('alertModal').classList.add('hidden');
+        }
+
+        async function _0x5e2() {
+            const u = document.getElementById('usernameInput').value.trim();
+            const p = document.getElementById('passwordInput').value.trim();
+            const e = document.getElementById('authError');
+            const l = document.getElementById('loginLoader');
+            const f = document.getElementById('loginForm');
+            if (!u || !p) { e.textContent = "Please enter credentials."; return; }
+            f.classList.add('hidden');
+            l.classList.remove('hidden');
+            e.textContent = "";
+            try {
+                await _0x9f1();
+                const x = _d.users.find(k => k.username.toLowerCase() === u.toLowerCase());
+                if (x) {
+                    if (x.password === p) {
+                        _0x2d1(x.username);
+                    } else {
+                        throw new Error("Incorrect password.");
+                    }
+                } else {
+                    if (!_x_mas) {
+                        throw new Error("Database Write Key missing in code.");
+                    }
+                    const n = { 
+                        username: u, 
+                        password: p, 
+                        joined: new Date().toISOString() 
+                    };
+                    _d.users.push(n);
+                    await _0x4e3();
+                    _0x2d1(u);
+                }
+            } catch (err) {
+                console.error(err);
+                e.textContent = err.message || "Connection Error.";
+                f.classList.remove('hidden');
+                l.classList.add('hidden');
             }
         }
 
-        function handleAuth() {
-            const userIn = document.getElementById('usernameInput').value.trim();
-            const passIn = document.getElementById('passwordInput').value.trim();
-            const errBox = document.getElementById('authError');
-
-            if (!userIn || !passIn) { errBox.textContent = "Please enter credentials."; return; }
-
-            if (userIn === ADMIN_USERNAME) {
-                if (passIn.length < 10) { errBox.textContent = "Invalid Admin Key format."; return; }
-                adminKey = passIn;
-                localStorage.setItem('ls_admin_key', adminKey);
-                loginSuccess(userIn);
-                return;
-            }
-
-            const storedPass = localStorage.getItem(`user_${userIn}`);
-            if (storedPass) {
-                if (storedPass === passIn) loginSuccess(userIn);
-                else errBox.textContent = "Incorrect password.";
-            } else {
-                localStorage.setItem(`user_${userIn}`, passIn);
-                loginSuccess(userIn);
-            }
-        }
-
-        function loginSuccess(username) {
-            currentUser = username;
-            localStorage.setItem('ls_user', username);
+        function _0x2d1(u) {
+            _u = u;
+            localStorage.setItem('ls_user', u);
             document.getElementById('loginOverlay').classList.add('hidden');
-            initApp();
+            _0x1a4();
         }
 
-        function logout() {
+        function _0x9a1() {
             localStorage.removeItem('ls_user');
-            localStorage.removeItem('ls_admin_key');
             location.reload();
         }
 
-        function initApp() {
-            document.getElementById('displayUsername').textContent = currentUser;
-            if (currentUser === ADMIN_USERNAME && adminKey) {
+        async function _0x1a4(r = false) {
+            document.getElementById('displayUsername').textContent = _u;
+            if (_u === _x_adm) {
                 document.getElementById('adminBadge').classList.remove('hidden');
                 document.getElementById('adminImportBtn').classList.remove('hidden');
             }
-            fetchSnippets();
-        }
-
-        async function fetchSnippets() {
-            const grid = document.getElementById('snippetGrid');
-            const loader = document.getElementById('loadingState');
-            grid.innerHTML = '';
-            loader.classList.remove('hidden');
-            
-            try {
-                const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`);
-                if(!response.ok) throw new Error("API Error");
-                const data = await response.json();
-                localSnippets = Array.isArray(data.record) ? data.record : [];
-                renderSnippets();
-            } catch (err) {
-                grid.innerHTML = `<p class="text-red-500 text-center col-span-3">Connection Failed. Ensure Bin is PUBLIC.</p>`;
-            } finally {
-                loader.classList.add('hidden');
+            if (!r) {
+                _0x6b2();
+            } else {
+                _0x2a9();
             }
         }
 
-        function setCategory(cat) {
-            currentCategory = cat;
-            const buttons = document.querySelectorAll('.cat-btn');
-            buttons.forEach(btn => {
-                if(btn.innerText === cat) btn.classList.add('active');
-                else btn.classList.remove('active');
-            });
-            renderSnippets(document.getElementById('searchInput').value);
+        async function _0x9f1() {
+            try {
+                const r = await fetch(`https://api.jsonbin.io/v3/b/${_x_bin}/latest`, {
+                    headers: _x_mas ? { 'X-Master-Key': _x_mas } : {}
+                });
+                if(!r.ok) throw new Error("Status: " + r.status);
+                const j = await r.json();
+                if (Array.isArray(j.record)) {
+                    _d = { users: [], snippets: j.record };
+                } else {
+                    _d = j.record || { users: [], snippets: [] };
+                }
+                return _d;
+            } catch (e) {
+                throw new Error("Database Connection Failed: " + e.message);
+            }
         }
 
-        function renderSnippets(searchTerm = '') {
-            const grid = document.getElementById('snippetGrid');
-            grid.innerHTML = '';
-            
-            const filtered = localSnippets.filter(s => {
-                const matchesSearch = s.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                      (s.description || "").toLowerCase().includes(searchTerm.toLowerCase());
-                const matchesCat = currentCategory === 'All' || s.category === currentCategory;
-                return matchesSearch && matchesCat;
+        async function _0x4e3() {
+            if (!_x_mas) throw new Error("Missing API Key");
+            await fetch(`https://api.jsonbin.io/v3/b/${_x_bin}`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': _x_mas
+                },
+                body: JSON.stringify(_d)
             });
+        }
 
-            filtered.sort((a, b) => {
-                const fA = a.featured ? 1 : 0;
-                const fB = b.featured ? 1 : 0;
-                if (fA !== fB) return fB - fA;
+        async function _0x2a9() {
+            const g = document.getElementById('snippetGrid');
+            const l = document.getElementById('loadingState');
+            g.innerHTML = '';
+            l.classList.remove('hidden');
+            try {
+                await _0x9f1();
+                _0x6b2();
+            } catch (e) {
+                l.classList.add('hidden');
+                g.innerHTML = `
+                    <div class="col-span-1 md:col-span-3 text-center p-8 bg-[#3b2222] border border-red-800 rounded">
+                        <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+                        <h3 class="text-xl font-bold text-white">Database Error</h3>
+                        <p class="text-red-300 mt-2">${e.message}</p>
+                        <p class="text-gray-400 text-sm mt-4">Please try refreshing the page later.</p>
+                    </div>
+                `;
+            } finally {
+                l.classList.add('hidden');
+            }
+        }
+
+        function _0x3e1(c) {
+            _c = c;
+            document.querySelectorAll('.cat-btn').forEach(b => {
+                if(b.innerText === c) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+            _0x6b2(document.getElementById('searchInput').value);
+        }
+
+        function _0x6b2(q = '') {
+            const g = document.getElementById('snippetGrid');
+            g.innerHTML = '';
+            const f = _d.snippets.filter(s => {
+                const m = s.title.toLowerCase().includes(q.toLowerCase()) || 
+                          (s.description || "").toLowerCase().includes(q.toLowerCase());
+                const c = _c === 'All' || s.category === _c;
+                return m && c;
+            });
+            f.sort((a, b) => {
+                if ((a.featured || false) !== (b.featured || false)) return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
                 return (b.votes || 0) - (a.votes || 0);
             });
-            
-            if (filtered.length === 0) {
+            if (f.length === 0) {
                 document.getElementById('emptyState').classList.remove('hidden');
             } else {
                 document.getElementById('emptyState').classList.add('hidden');
-                filtered.forEach(snip => {
-                    const isAdmin = (currentUser === ADMIN_USERNAME && adminKey);
-                    const voteCount = snip.votes || 0;
-                    const myVote = userVotes[snip.id] || 0;
-                    const isFeatured = snip.featured === true;
-                    
-                    const upClass = myVote === 1 ? 'text-orange-500' : 'text-gray-500 hover:text-orange-500';
-                    const downClass = myVote === -1 ? 'text-blue-500' : 'text-gray-500 hover:text-blue-500';
-                    
-                    const featureBtn = isAdmin 
-                        ? `<button onclick="toggleFeatured(${snip.id})" class="${isFeatured ? 'text-yellow-500 hover:text-yellow-400' : 'text-gray-600 hover:text-yellow-500'} p-1 transition"><i class="fas fa-star"></i></button>`
-                        : (isFeatured ? `<i class="fas fa-star text-yellow-500 p-1" title="Featured"></i>` : '');
-
-                    const deleteBtn = isAdmin ? `<button onclick="adminDeleteSnippet(${snip.id})" class="text-red-900 hover:text-red-500 p-1 flex-shrink-0 transition"><i class="fas fa-trash"></i></button>` : '';
-
-                    const card = document.createElement('div');
-                    card.className = `ore-panel flex h-80 transition relative ${isFeatured ? 'featured-gold' : ''}`;
-                    card.innerHTML = `
+                f.forEach(s => {
+                    const i = (_u === _x_adm);
+                    const v = s.votes || 0;
+                    const mv = _v[s.id] || 0;
+                    const ft = s.featured === true;
+                    const u = mv === 1 ? 'text-orange-500' : 'text-gray-500 hover:text-orange-500';
+                    const d = mv === -1 ? 'text-blue-500' : 'text-gray-500 hover:text-blue-500';
+                    const fb = i 
+                        ? `<button onclick="_0x1c9(${s.id})" class="${ft ? 'text-yellow-500 hover:text-yellow-400' : 'text-gray-600 hover:text-yellow-500'} p-1 transition"><i class="fas fa-star"></i></button>`
+                        : (ft ? `<i class="fas fa-star text-yellow-500 p-1" title="Featured"></i>` : '');
+                    const db = i ? `<button onclick="_0x5a2(${s.id})" class="text-red-900 hover:text-red-500 p-1 flex-shrink-0 transition"><i class="fas fa-trash"></i></button>` : '';
+                    const c = document.createElement('div');
+                    c.className = `ore-panel flex h-80 transition relative ${ft ? 'featured-gold' : ''}`;
+                    c.innerHTML = `
                         <div class="w-12 border-r-2 border-[#1e1e1e] bg-[#222] flex flex-col items-center p-2 gap-1">
-                            <button onclick="handleVote(${snip.id}, 1)" class="${upClass} transition">
-                                <i class="fas fa-caret-up text-3xl"></i>
-                            </button>
-                            <span class="font-bold text-lg ${voteCount > 0 ? 'text-orange-500' : (voteCount < 0 ? 'text-blue-500' : 'text-gray-400')}">${voteCount}</span>
-                            <button onclick="handleVote(${snip.id}, -1)" class="${downClass} transition">
-                                <i class="fas fa-caret-down text-3xl"></i>
-                            </button>
+                            <button onclick="_0x4d2(${s.id}, 1)" class="${u} transition"><i class="fas fa-caret-up text-3xl"></i></button>
+                            <span class="font-bold text-lg ${v > 0 ? 'text-orange-500' : (v < 0 ? 'text-blue-500' : 'text-gray-400')}">${v}</span>
+                            <button onclick="_0x4d2(${s.id}, -1)" class="${d} transition"><i class="fas fa-caret-down text-3xl"></i></button>
                         </div>
-                        <div class="flex-grow flex flex-col relative">
+                        <div class="flex-grow flex flex-col relative overflow-hidden">
                             <div class="p-3 border-b-2 border-[#1e1e1e] bg-[#333] flex justify-between items-start">
-                                <div class="overflow-hidden">
+                                <div class="overflow-hidden w-full pr-2">
                                     <div class="flex items-center gap-2">
-                                        <h3 class="font-bold text-white text-lg truncate pr-2">${esc(snip.title)}</h3>
-                                        ${isFeatured ? '<span class="px-1.5 py-0.5 bg-yellow-900 text-yellow-200 text-[10px] font-bold uppercase rounded border border-yellow-600">Featured</span>' : ''}
+                                        <h3 class="font-bold text-white text-lg text-clamp-1" title="${_0x9e1(s.title)}">${_0x9e1(s.title)}</h3>
+                                        ${ft ? '<span class="px-1.5 py-0.5 bg-yellow-900 text-yellow-200 text-[10px] font-bold uppercase rounded border border-yellow-600 flex-shrink-0">Featured</span>' : ''}
                                     </div>
                                     <div class="flex gap-2 mt-1 flex-wrap">
-                                        <span class="text-xs bg-[#1e1e1e] px-2 py-0.5 text-blue-300 border border-[#3c3c3c]">${esc(snip.category)}</span>
-                                        <span class="text-xs bg-[#1e1e1e] px-2 py-0.5 text-yellow-600 border border-[#3c3c3c]">${esc(snip.version)}</span>
+                                        <span class="text-xs bg-[#1e1e1e] px-2 py-0.5 text-blue-300 border border-[#3c3c3c] whitespace-nowrap">${_0x9e1(s.category)}</span>
+                                        <span class="text-xs bg-[#1e1e1e] px-2 py-0.5 text-yellow-600 border border-[#3c3c3c] whitespace-nowrap">${_0x9e1(s.version)}</span>
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-1">
-                                    ${featureBtn}
-                                    ${deleteBtn}
+                                <div class="flex items-center gap-1 flex-shrink-0">
+                                    ${fb}
+                                    ${db}
                                 </div>
                             </div>
                             <div class="p-4 flex-grow bg-[#262626] overflow-hidden flex flex-col">
-                                <p class="text-gray-400 text-sm line-clamp-2 mb-3 h-10">${esc(snip.description || "No description provided.")}</p>
-                                <div onclick="openViewModal(${snip.id})" class="code-preview-box group flex-grow relative">
-                                    ${esc(snip.code)}
+                                <p class="text-gray-400 text-sm text-clamp-2 mb-3 h-10">${_0x9e1(s.description || "No description provided.")}</p>
+                                <div onclick="_0x8a4(${s.id})" class="code-preview-box group flex-grow relative">
+                                    ${_0x9e1(s.code)}
                                     <div class="code-fade-overlay"></div>
                                     <div class="expand-overlay">
                                         <div class="flex items-center gap-2 text-white font-bold tracking-widest uppercase">
@@ -412,164 +475,153 @@
                                 </div>
                             </div>
                             <div class="p-2 border-t-2 border-[#1e1e1e] bg-[#2b2b2b] flex justify-between items-center text-xs text-gray-500">
-                                <span>By <span class="text-gray-300">${esc(snip.author)}</span></span>
+                                <span class="truncate">By <span class="text-gray-300">${_0x9e1(s.author)}</span></span>
                             </div>
                         </div>
                     `;
-                    grid.appendChild(card);
+                    g.appendChild(c);
                 });
             }
         }
 
-        async function handleVote(id, type) {
-            const snipIndex = localSnippets.findIndex(s => s.id === id);
-            if (snipIndex === -1) return;
+        async function _0x4d2(i, t) {
+            const x = _d.snippets.findIndex(s => s.id === i);
+            if (x === -1) return;
+            let c = _v[i] || 0;
+            let f = 0;
+            if (c === t) { f = -t; delete _v[i]; } 
+            else if (c === 0) { f = t; _v[i] = t; } 
+            else { f = -c + t; _v[i] = t; }
+            localStorage.setItem('ls_user_votes', JSON.stringify(_v));
+            if (!_d.snippets[x].votes) _d.snippets[x].votes = 0;
+            _d.snippets[x].votes += f;
+            _0x6b2(document.getElementById('searchInput').value);
+            if (_x_mas) _0x4e3().catch(e => console.error(e));
+        }
 
-            let currentVote = userVotes[id] || 0;
-            let diff = 0;
+        async function _0x1c9(i) {
+            const x = _d.snippets.findIndex(s => s.id === i);
+            if (x === -1 || _u !== _x_adm) return;
+            _d.snippets[x].featured = !_d.snippets[x].featured;
+            _0x6b2(document.getElementById('searchInput').value);
+            try { await _0x4e3(); } catch(e) { _0x3b2("Failed to save feature status.", "Error"); }
+        }
 
-            if (currentVote === type) {
-                diff = -type;
-                delete userVotes[id];
-            } else if (currentVote === 0) {
-                diff = type;
-                userVotes[id] = type;
-            } else {
-                diff = -currentVote + type;
-                userVotes[id] = type;
+        function _0x2f1() {
+            const n1 = Math.floor(Math.random() * 10) + 1;
+            const n2 = Math.floor(Math.random() * 10) + 1;
+            _z = n1 + n2;
+            document.getElementById('captchaLabel').innerText = `Security Check: What is ${n1} + ${n2}?`;
+            document.getElementById('captchaInput').value = "";
+        }
+
+        async function _0x5c8() {
+            const a = parseInt(document.getElementById('captchaInput').value);
+            if (isNaN(a) || a !== _z) {
+                _0x3b2("Incorrect Captcha Answer.", "Error");
+                _0x2f1();
+                return;
             }
-
-            localStorage.setItem('ls_user_votes', JSON.stringify(userVotes));
-            if (!localSnippets[snipIndex].votes) localSnippets[snipIndex].votes = 0;
-            localSnippets[snipIndex].votes += diff;
-            renderSnippets(document.getElementById('searchInput').value);
-            syncWithCloud();
-        }
-        
-        async function toggleFeatured(id) {
-            const snipIndex = localSnippets.findIndex(s => s.id === id);
-            if (snipIndex === -1 || !adminKey) return;
-            
-            localSnippets[snipIndex].featured = !localSnippets[snipIndex].featured;
-            renderSnippets(document.getElementById('searchInput').value);
-            syncWithCloud();
-        }
-
-        async function syncWithCloud() {
-            if (adminKey && currentUser === ADMIN_USERNAME) {
-                try {
-                    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                        method: 'PUT',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'X-Master-Key': adminKey
-                        },
-                        body: JSON.stringify(localSnippets)
-                    });
-                } catch (e) {
-                    console.log("Cloud sync failed");
-                }
-            }
-        }
-
-        async function submitSnippet() {
-            const title = document.getElementById('snipTitle').value;
-            const desc = document.getElementById('snipDesc').value;
-            const category = document.getElementById('snipCategory').value;
-            const version = document.getElementById('snipVersion').value;
-            const code = document.getElementById('snipCode').value;
-
-            if (!title || !code) { alert("Title and Code are required!"); return; }
-
-            const snippetData = {
+            const t = document.getElementById('snipTitle').value;
+            const ds = document.getElementById('snipDesc').value;
+            const c = document.getElementById('snipCategory').value;
+            const v = document.getElementById('snipVersion').value;
+            const cd = document.getElementById('snipCode').value;
+            if (!t || !cd) { _0x3b2("Title and Code are required!", "Validation Error"); return; }
+            const sd = {
                 id: Date.now(),
-                title, 
-                description: desc || "", 
-                category, 
-                version: version || "Unknown", 
-                code,
+                title: t, 
+                description: ds || "", 
+                category: c, 
+                version: v || "Unknown", 
+                code: cd,
                 votes: 0,
                 featured: false,
-                author: currentUser,
+                author: _u,
                 date: new Date().toLocaleDateString()
             };
-
-            const payload = {
-                content: "**New Snippet Submission**",
+            const pl = {
+                content: "<@858582768468099084> **New Snippet Pending Review**",
                 embeds: [{
-                    title: "Submission by " + currentUser,
-                    description: "Copy the JSON below and paste into Admin Import.",
+                    title: "Submission by " + _u,
+                    description: "```json\n" + JSON.stringify(sd) + "\n```",
                     color: 3966247,
-                    fields: [{ name: "Raw JSON", value: "```json\n" + JSON.stringify(snippetData) + "\n```" }]
+                    footer: { text: "Copy the JSON block above for admin import" }
                 }]
             };
-
             try {
-                await fetch(DISCORD_WEBHOOK_URL, {
+                await fetch(_x_dis, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(pl)
                 });
-                alert("Snippet submitted to Admin for review!");
-                closeUploadModal();
+                _0x3b2("Snippet submitted to Admin for review!", "Success");
+                _0x4a7();
             } catch (err) {
-                alert("Error connecting to Discord.");
+                _0x3b2("Error connecting to Discord.", "Network Error");
             }
         }
 
-        function openViewModal(id) {
-            const snip = localSnippets.find(s => s.id === id);
-            if(!snip) return;
-            document.getElementById('viewTitle').textContent = snip.title;
-            document.getElementById('viewCategory').textContent = snip.category;
-            document.getElementById('viewVersion').textContent = snip.version;
-            document.getElementById('viewDesc').textContent = snip.description || "No description provided.";
-            document.getElementById('viewCode').value = snip.code;
+        function _0x8a4(i) {
+            const s = _d.snippets.find(k => k.id === i);
+            if(!s) return;
+            document.getElementById('viewTitle').textContent = s.title;
+            document.getElementById('viewCategory').textContent = s.category;
+            document.getElementById('viewVersion').textContent = s.version;
+            document.getElementById('viewDesc').textContent = s.description || "No description provided.";
+            document.getElementById('viewCode').value = s.code;
             document.getElementById('viewModal').classList.remove('hidden');
         }
 
-        async function adminPublishSnippet() {
-            if (!adminKey) return;
+        async function _0x7b6() {
+            if (_u !== _x_adm) return;
             try {
-                const raw = document.getElementById('adminJsonPaste').value;
-                const newSnip = JSON.parse(raw);
-                if(!newSnip.votes) newSnip.votes = 0;
-                newSnip.featured = false;
-                
-                localSnippets.unshift(newSnip);
-                await syncWithCloud();
-                
-                alert("Published!");
-                closeAdminModal();
-                renderSnippets();
+                const r = document.getElementById('adminJsonPaste').value;
+                const n = JSON.parse(r);
+                if(!n.votes) n.votes = 0;
+                n.featured = false;
+                _d.snippets.unshift(n);
+                await _0x4e3();
+                _0x3b2("Published successfully!", "Admin");
+                _0x9c4();
+                _0x6b2();
             } catch (e) {
-                alert("Invalid JSON or Wrong Key.");
+                _0x3b2("Invalid JSON or Save Failed.", "Error");
             }
         }
-        
-        async function adminDeleteSnippet(id) {
-            if (!confirm("Confirm Delete?") || !adminKey) return;
-            localSnippets = localSnippets.filter(s => s.id !== id);
-            await syncWithCloud();
-            renderSnippets();
+
+        function _0x5a2(i) {
+            if (_u !== _x_adm) return;
+            _0x8c1("Are you sure you want to delete this snippet permanently?", async () => {
+                _d.snippets = _d.snippets.filter(s => s.id !== i);
+                try {
+                    await _0x4e3();
+                    _0x6b2();
+                } catch(e) { _0x3b2("Delete failed.", "Error"); }
+            });
         }
 
-        function openUploadModal() { document.getElementById('uploadModal').classList.remove('hidden'); }
-        function closeUploadModal() { document.getElementById('uploadModal').classList.add('hidden'); }
-        function openAdminModal() { document.getElementById('adminModal').classList.remove('hidden'); }
-        function closeAdminModal() { document.getElementById('adminModal').classList.add('hidden'); }
-        function closeViewModal() { document.getElementById('viewModal').classList.add('hidden'); }
-        function filterSnippets() { renderSnippets(document.getElementById('searchInput').value); }
-        function copyToClipboard(btn) {
-            const textarea = btn.parentElement.querySelector('textarea');
-            textarea.select();
-            document.execCommand('copy');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-            btn.classList.add('text-green-400');
-            setTimeout(() => { btn.innerHTML = originalHTML; btn.classList.remove('text-green-400'); }, 2000);
+        function _0x6f5() { 
+            _0x2f1(); 
+            document.getElementById('uploadModal').classList.remove('hidden'); 
         }
-        function esc(unsafe) { return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+        function _0x4a7() { document.getElementById('uploadModal').classList.add('hidden'); }
+        function _0x8d3() { document.getElementById('adminModal').classList.remove('hidden'); }
+        function _0x9c4() { document.getElementById('adminModal').classList.add('hidden'); }
+        function _0x1d9() { document.getElementById('viewModal').classList.add('hidden'); }
+        function _0x7c4() { _0x6b2(document.getElementById('searchInput').value); }
+
+        function _0x0f2(b) {
+            const t = b.parentElement.querySelector('textarea');
+            t.select();
+            document.execCommand('copy');
+            const o = b.innerHTML;
+            b.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            b.classList.add('text-green-400');
+            setTimeout(() => { b.innerHTML = o; b.classList.remove('text-green-400'); }, 2000);
+        }
+
+        function _0x9e1(u) { return (u || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
     </script>
 </body>
 </html>
